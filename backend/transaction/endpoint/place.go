@@ -9,24 +9,24 @@ import (
 
 type body struct {
 	Security string `json:"security" binding:"required"`
-	Quantity int    `json:"quantity" binding:"required"`
-	Price    int    `json:"price" binding:"required"`
+	Quantity int64  `json:"quantity" binding:"required"`
+	Price    int64  `json:"price" binding:"required"`
 	Side     string `json:"side" binding:"required"`
 }
 
 type order struct {
 	security string
 	user     string
-	quantity int
-	price    int
+	quantity int64
+	price    int64
 }
 
 type transaction struct {
 	buyer     string
 	seller    string
-	buyPrice  int
-	sellPrice int
-	quantity  int
+	buyPrice  int64
+	sellPrice int64
+	quantity  int64
 }
 
 func createMatch(tx *sql.Tx, security string, tr *transaction) error {
@@ -43,7 +43,7 @@ func createMatch(tx *sql.Tx, security string, tr *transaction) error {
 	return err
 }
 
-func findMatches(tx *sql.Tx, user string, security string, side bool, price int, quantity int) ([]*transaction, error) {
+func findMatches(tx *sql.Tx, user string, security string, side bool, price int64, quantity int64) ([]*transaction, error) {
 	transactions := make([]*transaction, 0)
 
 	var rows *sql.Rows
@@ -79,7 +79,7 @@ func findMatches(tx *sql.Tx, user string, security string, side bool, price int,
 			return nil, err
 		}
 
-		var transactionQuantity int
+		var transactionQuantity int64
 		if other.quantity >= quantity {
 			transactionQuantity = quantity
 		} else {
