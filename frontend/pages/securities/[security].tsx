@@ -17,9 +17,12 @@ export function getServerSideProps(context: GetServerSidePropsContext) {
     security_id: "12345",
     creation_date: Date.now() - 100000,
     price: 124,
-    creator: { name: "TUM", organisation_id: "fefwefewf" },
-    description: "This is the description",
-    title: "This is the title",
+    creator: {
+      name: "Technical University Munich",
+      organisation_id: "TUM1234",
+    },
+    description: "Best University in the World",
+    title: "Does the Higgs-Boson exist?",
     orders: [
       {
         id: "edidjw",
@@ -100,7 +103,7 @@ export default function Security(props: Securities) {
       </Head>
       <Layout>
         <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl pb-4">
-          {security.title} - {security.price / 1000}€
+          {security.title}
         </h2>
         <p className="text-xl">{security.description}</p>
         <p className="text-xl">{security.creator.name}</p>
@@ -134,7 +137,9 @@ export default function Security(props: Securities) {
         >
           Place Sell Order
         </button>
-        <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl py-4">Orders</h2>
+        <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl py-4">
+          Orders
+        </h2>
         {security.orders
           .sort((i, j) => j.price - i.price)
           .map((order) => {
@@ -151,7 +156,9 @@ export default function Security(props: Securities) {
               </section>
             );
           })}
-        <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl py-4">Further information</h2>
+        <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl py-4">
+          Further information
+        </h2>
       </Layout>
     </>
   );

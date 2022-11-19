@@ -8,13 +8,16 @@ import { SearchBar } from "./SearchBar";
 export function Layout({ children }: { children: ReactNode }) {
   return (
     <>
-      <header className="grid grid-cols-3 p-6 place-content-center align-center bg-slate-800 text-white items-center ">
+      <header className="grid grid-cols-3 p-6 bg-slate-800 text-white items-center ">
         <Link href="/" className="flex">
           <Logo />
           <h1 className="px-6 text-xl ">ResearchX</h1>
         </Link>
-        <SearchBar />
-        <section className="place-self-end">
+        <section className="flex justify-center">
+          <SearchBar />
+        </section>
+
+        <section className="flex justify-end">
           <Profile />
         </section>
       </header>

@@ -29,8 +29,8 @@ export function SearchBar() {
     console.log(searchText);
   };
   return (
-    <div className="flex justify-center align-middle">
-      <div className="mb-3 xl:w-96">
+    <div className="">
+      <div className="w-4/4">
         <input
           type="text"
           className="

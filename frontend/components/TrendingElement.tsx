@@ -1,11 +1,18 @@
+import Link from "next/link";
+
 export function TrendingElement({
   trendingElement,
 }: {
   trendingElement: TrendingSec;
 }) {
   return (
-    <div className="border-2 m-2 p-0.5">
-      <p>{trendingElement.title}</p>
-    </div>
+    <Link
+      href={"/securities/" + trendingElement.security_id}
+      key={trendingElement.security_id}
+    >
+      <div className=" m-2 border shadow rounded my-2 p-4 flex justify-between">
+        <p>{trendingElement.title}</p>
+      </div>
+    </Link>
   );
 }
