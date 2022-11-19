@@ -65,8 +65,9 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
   console.log(positive, negative);
   return (
     <ResponsiveLine
-      margin={{ top: 20, right: 20, bottom: 60, left: 80 }}
+      margin={{ top: 40, right: 40, bottom: 60, left: 80 }}
       animate={true}
+      height={400}
       data={[
         {
           id: "positive :)",
@@ -104,7 +105,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
         legendOffset: 12,
       }}
       axisBottom={{
-        format: "%b %d, %H:%m:%s",
+        format: "%b %d",
         //tickValues: "every 2 days",
         // tickRotation: -90,
         legend: "time scale",
