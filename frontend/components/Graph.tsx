@@ -1,31 +1,41 @@
 import { Line } from "@nivo/line";
 
+interface Dot {
+  x: number;
+  y: number | null;
+}
+
 export function Graph({ timeseries }: { timeseries: Timeseries }) {
   // Ziel ist https://nivo.rocks/storybook/?path=/docs/line--highlighting-negative-values
-  let positive: Timeseries = [];
-  let negative: Timeseries = [];
+  let positive: Dot[] = [];
+  let negative: Dot[] = [];
 
   const firstPrice = timeseries[0].price;
   const firstTimestamp = timeseries[0].timestamp;
 
-  for (const point of timeseries) {
-    point.timestamp -= firstTimestamp;
+  timeseries.forEach((point, i, series) => {
+    let dot = { x: point.timestamp - firstTimestamp, y: point.price };
+    let nullDot = { ...dot, y: null };
     if (point.price < firstPrice) {
-      negative.push(point);
-      // @ts-ignore
-      positive.push({ timestamp: point.timestamp, price: null });
-      break;
+      if (series[i - 1].price > firstPrice) {
+        // Wendepunkt
+        const previousPoint = series[i - 1];
+        negative.push({ x: previousPoint.timestamp - firstTimestamp, y: previousPoint.price });
+      }
+      // Order of insertion matters
+      negative.push(dot);
+      positive.push(nullDot);
+
+      if (series[i + 1] && series[i + 1].price >= firstPrice) {
+        const nextPoint = series[i + 1];
+        negative.push({ x: nextPoint.timestamp - firstTimestamp, y: nextPoint.price });
+      }
+    } else {
+      negative.push(nullDot);
+      positive.push(dot);
     }
-    positive.push(point);
-    // @ts-ignore
-    negative.push({ timestamp: point.timestamp, price: null });
-  }
-  positive = positive.map((t) => {
-    return { x: t.timestamp, y: t.price };
   });
-  negative = negative.map((t) => {
-    return { x: t.timestamp, y: t.price };
-  });
+
   console.log(positive, negative);
   return (
     <Line
@@ -41,7 +51,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
           data: negative,
         },
       ]}
-      curve="monotoneX"
+      curve="natural"
       enablePointLabel={true}
       pointSize={14}
       pointBorderWidth={1}
@@ -54,8 +64,6 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
       colors={["rgb(97, 205, 187)", "rgb(244, 117, 96)"]}
       xScale={{
         type: "linear",
-        min: -10000,
-        max: 350000,
       }}
       yScale={{
         type: "linear",
