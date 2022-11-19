@@ -7,7 +7,7 @@ declare interface Order {
   id: string;
   qty: number;
   price: number;
-  side: "BUY" | "SELL";
+  side: "buy" | "sell";
 }
 
 declare interface Security {

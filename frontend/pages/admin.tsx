@@ -7,16 +7,69 @@ import React, { useEffect, useState } from "react";
 import { Graph } from "../components/Graph";
 import Link from "next/link";
 
-export default function Home() {
-  const [speed, setSpeed] = useState(50);
-  const [simulate, setSimulate] = useState(false);
+import {
+  useQuery,
+  useQueryClient,
+  useMutation,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import { queryClient } from "./_app";
 
+export async function getServerSideProps() {
+  //  const res = await fetch("localhost:3001/security/all");
+  // let securities: string[] = await res.json();
+  let securities = ["3e8b7701-9d3e-407a-b78a-d8fa4d07bff5"];
+  return { props: { securities } };
+}
+
+interface AdminProps {
+  securities: string[];
+}
+
+interface Match {
+  created: number;
+  price: number;
+  quantity: number;
+  security: string;
+}
+
+export default function Home({ securities }: AdminProps) {
+  const [speed, setSpeed] = useState(1000);
+  const [simulate, setSimulate] = useState(false);
+  const varyingPrice = (x: number) =>
+    0.35 +
+    (1 / 8) *
+      (Math.sin(2) - Math.sin(3 * x) + Math.sin(5 * x) - Math.sin(7 * x) + Math.sin(11 * x));
+
+  const { status, data, error, isFetching } = useQuery(["matches"], async () => {
+    const res = await fetch("http://localhost:3001/order/history/");
+    const history: Match[] = await res.json();
+    return history;
+  });
+
+  const orderMutation = useMutation(
+    (order: Order) =>
+      fetch(`http://localhost:3002/order/place`, {
+        method: "POST",
+        body: JSON.stringify(order),
+      }),
+    {
+      onSuccess: () => queryClient.invalidateQueries(["matches"]),
+    }
+  );
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log("This will run every second!");
-    }, 1000);
+      const order: Order = {
+        id: securities[Math.floor(Math.random() * securities.length)],
+        price: varyingPrice(Date.now()) + Math.random() * 0.1,
+        qty: Math.random() * 1000,
+        side: Math.random() < 0.5 ? "sell" : "buy",
+      };
+      simulate && orderMutation.mutate(order);
+    }, speed);
     return () => clearInterval(interval);
-  }, [simulate]);
+  }, [simulate, speed, orderMutation, securities]);
 
   return (
     <>
@@ -27,18 +80,52 @@ export default function Home() {
       </Head>
       <Layout>
         <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl pb-4">Admin dashboard</h2>
+        <label
+          className="  px-3 
+            py-4
+          text-base
+            font-normal
+            inline-block
+            text-gray-700"
+          htmlFor="speed"
+        >
+          Trading Speed:
+        </label>
         <input
           type="range"
           name="speed"
           id="speed"
-          value={speed}
-          onChange={(e) => setSpeed(Number(e.target.value))}
-          min={0}
+          className="translate-y-1"
+          value={10000 / speed}
+          onChange={(e) => setSpeed(10000 / Number(e.target.value))}
+          min={1}
           max={100}
         />
-        <button onClick={() => setSimulate((s) => !s)} className="text-xl">
-          Start Autotrader
+        {"  -->  "}
+        {(100 / speed).toFixed(2)} transactions / second
+        <br />
+        <button
+          className={` 
+            px-3
+            py-1.5
+            text-base
+            font-normal
+            text-gray-700
+            ${simulate ? "bg-red-400" : "bg-white"} bg-clip-padding
+            border border-solid border-gray-300
+            rounded
+            transition
+            ease-in-out
+            m-0`}
+          onClick={() => setSimulate((s) => !s)}
+        >
+          {simulate ? "Stop Autotrader" : "Start Autotrader"}
         </button>
+        <br />
+        <br />
+        {status === "loading" && <h1>Loading...</h1>}
+        {status === "error" && <span>Error: {error.message}</span>}
+        {status === "success" && data.ma}
       </Layout>
     </>
   );
