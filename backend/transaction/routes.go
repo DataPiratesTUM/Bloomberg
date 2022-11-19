@@ -12,7 +12,11 @@ func registerRoutes(r *gin.Engine, db *sql.DB) {
 		endpoint.PlaceOrder(c, db)
 	})
 
-	r.DELETE("order/:id", func(c *gin.Context) {
+	r.GET("order/history", func(c *gin.Context) {
+		endpoint.DeleteOrder(c, db)
+	})
+
+	r.GET("order/placed", func(c *gin.Context) {
 		endpoint.DeleteOrder(c, db)
 	})
 }
