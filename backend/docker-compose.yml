@@ -1,16 +1,25 @@
 version: '3.8'
 services:
+  transaction:
+    build: transaction
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_CONTAINER=database
+      - POSTGRES_DB=database
+    ports:
+      - "3001:8080"
+    depends_on:
+      - database
+
   database:
     image: postgres:latest
     restart: always
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=database
     ports:
       - '5432:5432'
     volumes:
-      - database:/var/lib/postgresql/data
-
-volumes:
-  database:
-    driver: local
+      - ./sql:/docker-entrypoint-initdb.d
