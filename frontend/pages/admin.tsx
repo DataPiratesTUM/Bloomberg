@@ -64,9 +64,10 @@ export default function Admin() {
   useEffect(() => {
     const interval = setInterval(() => {
       const order: Order = {
-        security: securities.data
-          ? securities.data[Math.floor(Math.random() * securities.data.length)].security_id
-          : "3e8b7701-9d3e-407a-b78a-d8fa4d07bff5",
+        // securities.data
+        security:
+          //   ? securities.data[Math.floor(Math.random() * securities.data.length)].security_id :
+          "3e8b7701-9d3e-407a-b78a-d8fa4d07bff5",
         price: Math.floor((varyingPrice(Date.now()) + Math.random() * 0.1) * 1000),
         quantity: Math.floor(Math.random() * 1000),
         side: Math.random() < 0.5 ? "sell" : "buy",
