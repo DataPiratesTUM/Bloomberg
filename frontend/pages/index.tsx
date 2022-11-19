@@ -99,7 +99,7 @@ export default function Home(props: Home) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Layout>
-        <section className="grid grid-rows-[0.5fr_2.3fr_1fr] grid-cols-2 gap-2">
+        <section className="grid grid-rows-[0.5fr_2.2fr_1fr] grid-cols-2 gap-2">
           <section>
             <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4 basis-3/4">
               Hello, {user.name}
@@ -141,7 +141,7 @@ export default function Home(props: Home) {
 
             <Graph timeseries={user.timeseries} />
           </section>
-          <section className="col-start-1">
+          <section className="col-start-1 col-span-2">
             <TrendingList trendingList={trending} />
           </section>
         </section>

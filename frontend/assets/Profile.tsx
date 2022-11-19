@@ -1,6 +1,6 @@
 export default function Profile() {
   return (
-    <div className="self-center">
+    <div className="">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"

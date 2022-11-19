@@ -4,6 +4,24 @@ interface Dot {
   x: number;
   y: number | null;
 }
+// @ts-ignore
+const CustomSymbol = ({ size, color, borderWidth, borderColor }) => (
+  <g>
+    <circle
+      fill="#fff"
+      r={size / 2}
+      strokeWidth={borderWidth}
+      stroke={borderColor}
+    />
+    <circle
+      r={size / 5}
+      strokeWidth={borderWidth}
+      stroke={borderColor}
+      fill={color}
+      fillOpacity={0.35}
+    />
+  </g>
+);
 
 export function Graph({ timeseries }: { timeseries: Timeseries }) {
   // Ziel ist https://nivo.rocks/storybook/?path=/docs/line--highlighting-negative-values
@@ -20,7 +38,10 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
       if (series[i - 1].price > firstPrice) {
         // Wendepunkt
         const previousPoint = series[i - 1];
-        negative.push({ x: previousPoint.timestamp - firstTimestamp, y: previousPoint.price });
+        negative.push({
+          x: previousPoint.timestamp - firstTimestamp,
+          y: previousPoint.price,
+        });
       }
       // Order of insertion matters
       negative.push(dot);
@@ -28,7 +49,10 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
 
       if (series[i + 1] && series[i + 1].price >= firstPrice) {
         const nextPoint = series[i + 1];
-        negative.push({ x: nextPoint.timestamp - firstTimestamp, y: nextPoint.price });
+        negative.push({
+          x: nextPoint.timestamp - firstTimestamp,
+          y: nextPoint.price,
+        });
       }
     } else {
       negative.push(nullDot);
@@ -39,6 +63,9 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
   console.log(positive, negative);
   return (
     <Line
+      margin={{ top: 20, right: 20, bottom: 60, left: 80 }}
+      animate={true}
+      enableSlices="x"
       width={700}
       height={400}
       data={[
@@ -71,6 +98,15 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
         min: 0,
         max: 1000,
       }}
+      axisLeft={{
+        legend: "linear scale",
+        legendOffset: 12,
+      }}
+      axisBottom={{
+        legend: "linear scale",
+        legendOffset: -12,
+      }}
+      pointSymbol={CustomSymbol}
       enableArea={true}
       areaOpacity={0.07}
       enableSlices={false}
