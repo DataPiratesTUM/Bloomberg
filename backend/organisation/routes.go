@@ -13,7 +13,7 @@ func registerRoutes(r *gin.Engine, db *sql.DB) {
 	*/
 
 	r.GET("/user/:id", func(c *gin.Context) {
-		services.GetUser(c, db)
+		services.GetUserAdapter(c, db)
 	})
 	r.POST("/user/:id/balance", func(c *gin.Context) {
 		services.ChangeBalance(c, db)
@@ -28,7 +28,13 @@ func registerRoutes(r *gin.Engine, db *sql.DB) {
 	/*
 		Routes to manage securities
 	*/
-	r.POST("/security/create")
-	r.GET("/security/:id")    // id is security id or "all"
-	r.DELETE("/security/:id") //only possible in the first phase
+	r.POST("/security/create", func(c *gin.Context) {
+		services.CreateSecurity(c, db)
+	})
+	r.GET("/security/:id", func(c *gin.Context) {
+		services.GetSecurityAdapter(c, db)
+	}) // id is security id or "all"
+	r.DELETE("/security/:id", func(c *gin.Context) {
+		services.DeleteSecurity(c, db)
+	}) //only possible in the first phase
 }

@@ -2,49 +2,63 @@ package services
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	GetUserSql       string = "SELECT u.name, u.balance FROM users u WHERE u.id = $1"
+	GetUserSql       string = "SELECT u.name, u.balance, u.organisation FROM users u WHERE u.id = $1"
 	AddBalanceSQL           = "UPDATE users SET balance = (balance + $1) WHERE id = $2"
 	RemoveBalanceSQL        = "UPDATE users SET balance = (balance - $1) WHERE id = $2"
 )
 
 type BalanceRequest struct {
-	IsWithdraw bool   `json:"IsWithdraw"`
-	Amount     uint64 `json:"Amount"`
+	IsWithdraw bool   `json:"IsWithdraw" binding:"required"`
+	Amount     uint64 `json:"Amount" binding:"required"`
 }
 
 type User struct {
-	Name    string `json:"Name"`
-	Balance uint64 `json:"Balance"`
+	Name           string `json:"Name" binding:"required"`
+	Balance        uint64 `json:"Balance" binding:"required"`
+	OrganisationId string `json:"OrganisationId"`
 }
 
-func GetUser(c *gin.Context, db *sql.DB) {
-	uuid := c.Param("id")
-
+func getUser(db *sql.DB, uuid string) (User, error) {
 	//Query the database for the user
 	rows, err := db.Query(GetUserSql, uuid)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
+		return User{}, err
 	}
 	defer rows.Close()
 
 	//Check if the user has been found
 	if !rows.Next() {
-		c.Status(http.StatusNotFound)
-		return
+		return User{}, fmt.Errorf("User not found")
 	}
 
 	//Try to parse the user data
+	var orgIdNull sql.NullString
 	var user User
-	err = rows.Scan(&user.Name, &user.Balance)
+	err = rows.Scan(&user.Name, &user.Balance, &orgIdNull)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		return User{}, err
+	}
+
+	if orgIdNull.Valid {
+		user.OrganisationId = orgIdNull.String
+	}
+
+	return user, nil
+}
+
+func GetUserAdapter(c *gin.Context, db *sql.DB) {
+	uuid := c.Param("id")
+
+	user, err := getUser(db, uuid)
+	if err != nil {
+		c.Status(http.StatusNotFound)
 		return
 	}
 
