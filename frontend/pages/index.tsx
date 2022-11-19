@@ -129,12 +129,9 @@ export default function Home(props: Home) {
           </section>
 
           <section className="row-span-2">
-            <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">
-              Your assets
-            </h3>
+            <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">Your assets</h3>
             {user.securities.map((security) => {
-              const percentageReturn =
-                (security.price / security.price_bought - 1) * 100;
+              const percentageReturn = (security.price / security.price_bought - 1) * 100;
               return (
                 <Link
                   href={"/securities/" + security.id}
@@ -157,9 +154,7 @@ export default function Home(props: Home) {
             })}
           </section>
           <section className=" flex flex-col justify-center">
-            <p className="text-xl mb-6">
-              Your futures are worth {user.balance / 100}€ in total
-            </p>
+            <p className="text-xl mb-6">Your futures are worth {user.balance / 100}€ in total</p>
 
             <Graph timeseries={user.timeseries} />
           </section>
