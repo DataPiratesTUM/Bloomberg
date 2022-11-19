@@ -4,7 +4,7 @@ export function TrendingElement({
   trendingElement: TrendingSec;
 }) {
   return (
-    <div className="border-2 m-1 p-0.5">
+    <div className="border-2 m-2 p-0.5">
       <p>{trendingElement.title}</p>
     </div>
   );

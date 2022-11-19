@@ -2,8 +2,10 @@ import { TrendingElement } from "./TrendingElement";
 
 export function TrendingList({ trendingList }: { trendingList: TrendingList }) {
   return (
-    <div className="border-4 border-gray-800 p-0.5 rounded  place-self-center">
-      <p>Trending</p>
+    <div className=" p-0.5 rounded  place-self-center">
+      <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">
+        Trending
+      </h3>
       {trendingList.trendings.map((trending) => (
         <TrendingElement
           key={trending.security_id}

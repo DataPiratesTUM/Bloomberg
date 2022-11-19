@@ -29,7 +29,7 @@ export function SearchBar() {
     console.log(searchText);
   };
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-center align-middle">
       <div className="mb-3 xl:w-96">
         <input
           type="text"

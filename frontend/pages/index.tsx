@@ -95,15 +95,15 @@ export default function Home(props: Home) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Layout>
-        <section className="grid grid-rows-6 grid-cols-2 gap-4">
+        <section className="grid grid-rows-[0.5fr_2.3fr_1fr] grid-cols-2 gap-2">
           <section>
-            <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl pb-4 basis-3/4">
+            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4 basis-3/4">
               Hello, {user.name}
             </h2>
           </section>
 
-          <section className="place-self-auto row-span-3">
-            <h3 className="text-4xl font-bold tracking-tight  sm:text-4xl">
+          <section className="row-span-2">
+            <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">
               Your assets
             </h3>
             {user.securities.map((security) => {
@@ -130,14 +130,14 @@ export default function Home(props: Home) {
               );
             })}
           </section>
-          <section className="row-span-4">
-            <p className="text-xl">
+          <section>
+            <p className="text-xl mb-6">
               Your futures are worth {user.balance / 100}€ in total
             </p>
 
             <Graph timeseries={user.timeseries} />
           </section>
-          <section className="col-start-1 col-span-2">
+          <section className="col-start-1">
             <TrendingList trendingList={trending} />
           </section>
         </section>
