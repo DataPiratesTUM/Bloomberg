@@ -109,14 +109,12 @@ export default function Security(props: Securities) {
               {security.title}
             </h2>
             <p className="text-xl">{security.description}</p>
-            <p className="text-xl">{security.creator.name}</p>
+            <p className="text-xl">{security.creator}</p>
             <p className="text-xl">{timeToNextPhase} until the next phase!</p>
             <Setps />
           </section>
           <section className="row-span-2 p">
-            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
-              Orders
-            </h2>
+            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">Orders</h2>
             {security.orders
               .sort((i, j) => j.price - i.price)
               .map((order) => {
@@ -187,9 +185,7 @@ export default function Security(props: Securities) {
                   value={offer}
                 />
               </div>{" "}
-              {(quantity * offer) / 100 != 0
-                ? "= " + (quantity * offer) / 100
-                : " "}
+              {(quantity * offer) / 100 != 0 ? "= " + (quantity * offer) / 100 : " "}
             </div>
             <div className="flex gap-20 pt-5">
               <button

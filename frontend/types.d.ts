@@ -10,6 +10,11 @@ declare interface Order {
   side: "buy" | "sell";
 }
 
+declare interface Portfolio {
+  time: number;
+  value: number;
+}
+
 declare interface Match {
   created: number;
   price: number;

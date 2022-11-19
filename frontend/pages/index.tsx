@@ -10,86 +10,85 @@ import { TrendingList } from "../components/TrendingList";
 import query from "../query";
 
 export async function getServerSideProps() {
-  // const res = await fetch("");
-  //let user: User = await res.json();
+  let res_user = fetch(
+    "https://organisation.ban.app/user/4e805cc9-fe3b-4649-96fc-f39634a557cd",
+    {}
+  );
+  let res_user_securities = fetch("https://organisation.ban.app/security/all", {
+    headers: {
+      "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd",
+    },
+  });
+  let res_user_portfolio = fetch("https://transaction.ban.app/order/value", {
+    headers: {
+      "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd",
+    },
+  });
 
-  // Mock data
-  let user: User = {
-    user_id: "123",
-    name: "Cole Friedlaender",
-    balance: 12345,
-    securities: [
-      {
-        name: "Does the Higgs-Boson exist? ",
-        id: "1234",
-        qty: 4,
-        price: 938,
-        price_bought: 378,
-      },
-      {
-        name: "Does sitting during a hackathon for 24 hours cause diabetis?",
-        id: "1235",
-        qty: 38,
-        price: 333,
-        price_bought: 546,
-      },
-      {
-        name: "Does sitting during a hackathon for 24 hours cause diabetis?",
-        id: "1236",
-        qty: 38,
-        price: 333,
-        price_bought: 546,
-      },
-      {
-        name: "Does sitting during a hackathon for 24 hours cause diabetis?",
-        id: "1237",
-        qty: 38,
-        price: 333,
-        price_bought: 546,
-      },
-      {
-        name: "Does sitting during a hackathon for 24 hours cause diabetis?",
-        id: "1238",
-        qty: 38,
-        price: 333,
-        price_bought: 546,
-      },
-    ],
-    timeseries: [
-      { timestamp: Date.now(), price: 567 },
-      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 1, price: 670 },
-      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 2, price: 589 },
-      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 3, price: 400 },
-      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 4, price: 567 },
-      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 5, price: 670 },
-      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 6, price: 589 },
-      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 7, price: 400 },
-    ],
-  };
+  let res_user_trending = fetch("https://transaction.ban.app/trending");
 
-  // Mock data
-  let trending: TrendingList = {
-    trendings: [
-      {
-        security_id: "1",
-        title: "Test1",
-      },
-      {
-        security_id: "2",
-        title: "Test2",
-      },
-      {
-        security_id: "3",
-        title: "Test3",
-      },
-      {
-        security_id: "4",
-        title: "Test4",
-      },
-    ],
-  };
-
+  let [json_user, json_user_securities, json_user_portfolio, json_user_trending] =
+    await Promise.all([res_user, res_user_securities, res_user_portfolio, res_user_trending]);
+  console.log(json_user_securities.body);
+  const user: User = await json_user.json();
+  const securites: Security[] = await json_user_securities.json();
+  const portfolio: Portfolio[] = await json_user_portfolio.json();
+  const trending: string[] = await json_user_trending.json();
   return { props: { user, trending } };
+
+  // Mock data
+  // let user: User = {
+  //   user_id: "123",
+  //   name: "Cole Friedlaender",
+  //   balance: 12345,
+  //   securities: [
+  //     {
+  //       name: "Does the Higgs-Boson exist? ",
+  //       id: "1234",
+  //       qty: 4,
+  //       price: 938,
+  //       price_bought: 378,
+  //     },
+  //     {
+  //       name: "Does sitting during a hackathon for 24 hours cause diabetis?",
+  //       id: "1235",
+  //       qty: 38,
+  //       price: 333,
+  //       price_bought: 546,
+  //     },
+  //     {
+  //       name: "Does sitting during a hackathon for 24 hours cause diabetis?",
+  //       id: "1236",
+  //       qty: 38,
+  //       price: 333,
+  //       price_bought: 546,
+  //     },
+  //     {
+  //       name: "Does sitting during a hackathon for 24 hours cause diabetis?",
+  //       id: "1237",
+  //       qty: 38,
+  //       price: 333,
+  //       price_bought: 546,
+  //     },
+  //     {
+  //       name: "Does sitting during a hackathon for 24 hours cause diabetis?",
+  //       id: "1238",
+  //       qty: 38,
+  //       price: 333,
+  //       price_bought: 546,
+  //     },
+  //   ],
+  //   timeseries: [
+  //     { timestamp: Date.now(), price: 567 },
+  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 1, price: 670 },
+  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 2, price: 589 },
+  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 3, price: 400 },
+  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 4, price: 567 },
+  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 5, price: 670 },
+  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 6, price: 589 },
+  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 7, price: 400 },
+  //   ],
+  // };
 }
 
 interface Home {
