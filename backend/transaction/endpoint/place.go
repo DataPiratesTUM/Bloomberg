@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -140,12 +141,12 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 		`SELECT 
 			SUM(
 				CASE
-				WHEN buyer == $1 THEN quantity
+				WHEN buyer = $1 THEN quantity
 				ELSE -quantity
 				END
 			) AS count 
 		FROM matches m
-		WHERE security = $2
+		WHERE security = $2 AND (buyer = $1 OR seller = $1)
 		GROUP BY security;`,
 		user,
 		body.Security,
@@ -155,25 +156,27 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	if !sn.Next() {
-		c.Status(http.StatusForbidden)
-		return
-	}
-	var amount int64
-	e := sn.Scan(&amount)
-	if e != nil {
-		sendError(c, http.StatusInternalServerError, e)
-		return
-	}
+	if !orderSide {
+		if !sn.Next() {
+			c.Status(http.StatusForbidden)
+			return
+		}
+		var amount int64
+		e := sn.Scan(&amount)
+		if e != nil {
+			sendError(c, http.StatusInternalServerError, e)
+			return
+		}
 
-	if amount < body.Quantity && orderSide {
-		c.Status(http.StatusForbidden)
-		return
+		if amount < body.Quantity {
+			c.Status(http.StatusForbidden)
+			return
+		}
 	}
 
 	//Check if the security is in phase 1 and funding_date is not set. THen calculate current price based on a linear function. Check if funding has been reached
 	rows, err := db.Query(
-		`SELECT s.creation_date, s.ttl_1, s.funding_date, funding_goal FROM securities s WHERE s.id = $1`,
+		`SELECT s.creation_date, s.ttl_1, s.funding_date, funding_goal, funding_remaining FROM securities s WHERE s.id = $1`,
 		body.Security,
 	)
 	if err != nil {
@@ -188,8 +191,9 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 	var ttl1 int64
 	var funding_date sql.NullTime
 	var funding_goal int64
+	var funding_remaining int64
 
-	if err = rows.Scan(&creationDate, &ttl1, &funding_date, &funding_goal); err != nil {
+	if err = rows.Scan(&creationDate, &ttl1, &funding_date, &funding_goal, &funding_remaining); err != nil {
 		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -204,6 +208,7 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 	if !funding_date.Valid {
 		if time.Now().After(creationDate.Add(time.Duration(ttl1) * time.Second)) {
 			c.Status(http.StatusBadRequest)
+			return
 		} else {
 			diff := time.Since(creationDate).Seconds()
 
@@ -213,6 +218,16 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 				currentPrice = 0
 			}
 
+			var tmp int64
+			fullyFunded := false
+			if funding_remaining-body.Quantity*currentPrice < currentPrice {
+				tmp = body.Quantity - funding_remaining/currentPrice
+				body.Quantity = funding_remaining / currentPrice
+				fullyFunded = true
+			}
+			fmt.Println(body.Quantity)
+
+			//Insert a match without a seller to indicate initial shares
 			_, err = tx.Exec(
 				`INSERT INTO "matches" ("security", "buyer", "buy_price", "sell_price", "quantity") VALUES ($1, $2, $3, $4, $5);`,
 				body.Security,
@@ -221,31 +236,48 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 				currentPrice,
 				body.Quantity,
 			)
+
 			if err != nil {
 				sendError(c, http.StatusInternalServerError, err)
 				tx.Rollback()
 				return
 			}
 
-		}
-		return
-	}
+			//Check if phase 1 should be ended
+			if fullyFunded {
+				_, err = tx.Exec(
+					`UPDATE securities SET funding_date = $1 WHERE id = $2`,
+					time.Now(),
+					body.Security,
+				)
+				if err != nil {
+					sendError(c, http.StatusInternalServerError, err)
+				}
+			}
 
-	_, err = tx.Exec(
-		`INSERT INTO "orders" ("security", "quantity", "price", "side", "user") VALUES ($1, $2, $3, $4, $5);`,
-		body.Security,
-		body.Quantity,
-		body.Price,
-		orderSide,
-		user,
-	)
-	if err != nil {
-		sendError(c, http.StatusInternalServerError, err)
-		tx.Rollback()
-		return
+			if tmp > 0 {
+				body.Quantity = tmp
+			}
+
+		}
+
 	}
 
 	if body.Quantity > 0 {
+		_, err = tx.Exec(
+			`INSERT INTO "orders" ("security", "quantity", "price", "side", "user") VALUES ($1, $2, $3, $4, $5);`,
+			body.Security,
+			body.Quantity,
+			body.Price,
+			orderSide,
+			user,
+		)
+		if err != nil {
+			sendError(c, http.StatusInternalServerError, err)
+			tx.Rollback()
+			return
+		}
+
 		transactions, err := findMatches(tx, user, body.Security, orderSide, body.Price, body.Quantity)
 		if err != nil {
 			sendError(c, http.StatusInternalServerError, err)

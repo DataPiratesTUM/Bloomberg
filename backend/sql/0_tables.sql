@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS securities (
     ttl_1         BIGINT          NOT NULL CHECK (ttl_1 > 0),
     ttl_2         BIGINT          NOT NULL CHECK (ttl_2 > ttl_1),
     funding_goal  BIGINT          NOT NULL CHECK (funding_goal > 0),
-    funding_date  TIMESTAMP       CHECK (funding_date < to_timestamp(ttl_1))
+    funding_remaining BIGINT      NOT NULL CHECK (funding_remaining >= 0),
+    funding_date  TIMESTAMP       
 );
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -89,19 +90,21 @@ CREATE OR REPLACE TRIGGER order_trigger
 CREATE OR REPLACE FUNCTION match_trigger_function() 
     RETURNS TRIGGER AS $trigger$
 BEGIN
-    UPDATE open_orders
-    SET quantity = quantity - NEW.quantity
-    WHERE side
-        AND "user" = NEW.buyer
-        AND price = NEW.buy_price
-        AND security = NEW.security;
+    IF NEW.seller IS NOT NULL THEN
+        UPDATE open_orders
+        SET quantity = quantity - NEW.quantity
+        WHERE side
+            AND "user" = NEW.buyer
+            AND price = NEW.buy_price
+            AND security = NEW.security;
 
-    UPDATE open_orders 
-    SET quantity = quantity - NEW.quantity
-    WHERE NOT side
-        AND "user" = NEW.seller
-        AND price = NEW.sell_price
-        AND security = NEW.security;
+        UPDATE open_orders 
+        SET quantity = quantity - NEW.quantity
+        WHERE NOT side
+            AND "user" = NEW.seller
+            AND price = NEW.sell_price
+            AND security = NEW.security;
+    END IF;
 
     RETURN NEW;
 END; 
