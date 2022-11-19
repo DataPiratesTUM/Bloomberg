@@ -1,10 +1,18 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"bloomberg/transaction/endpoint"
+	"database/sql"
 
-func registerRoutes(r *gin.Engine) {
-	r.POST("order/buy")
-	r.POST("order/sell")
+	"github.com/gin-gonic/gin"
+)
 
-	r.DELETE("order/:id")
+func registerRoutes(r *gin.Engine, db *sql.DB) {
+	r.POST("order/place", func(c *gin.Context) {
+		endpoint.PlaceOrder(c, db)
+	})
+
+	r.DELETE("order/:id", func(c *gin.Context) {
+		endpoint.DeleteOrder(c, db)
+	})
 }
