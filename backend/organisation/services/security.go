@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	CreateSecuritySql   string = "INSERT INTO securities (id, name, description, creator, ttl_1, ttl_2, funding_goal) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	CreateSecuritySql   string = "INSERT INTO securities (id, name, description, creator, ttl_1, ttl_2, funding_goal, funding_remaining) VALUES ($1, $2, $3, $4, $5, $6, $7, $7)"
 	GetSecuritySql      string = "SELECT  s.*, p.sell_price, 0 AS qty FROM  securities s LEFT JOIN ( SELECT m.security, m.sell_price FROM matches m WHERE m.id = (SELECT m2.id FROM matches m2 WHERE m2.security = m.security ORDER BY creation_date DESC LIMIT 1) ) AS p ON p.security = s.id WHERE s.id = $1"
 	GetAllSecuritiesSql string = "SELECT  s.*,  p.sell_price, tq.qty FROM  securities s,  (   SELECT    tmp.security,    SUM(tmp.qty) AS qty   FROM (    SELECT      m.security,      (CASE       WHEN buyer = $1 THEN m.quantity      ELSE (-1) * m.quantity     END) AS qty    FROM matches m WHERE buyer = $1 OR seller = $1   ) AS tmp   GROUP BY tmp.security  ) AS tq,  (   SELECT m.security, m.sell_price FROM matches m WHERE m.id = (SELECT m2.id FROM matches m2 WHERE m2.security = m.security ORDER BY creation_date DESC LIMIT 1)  ) AS p WHERE tq.security = s.id AND p.security = s.id"
 	DeleteSecuritySql   string = "DELETE FROM securities WHERE id = $1 AND creator = $2"
@@ -27,17 +27,18 @@ type CreateSecurityReqest struct {
 }
 
 type Security struct {
-	SecurityId    string `json:"security_id"`
-	Title         string `json:"title" binding:"required"`
-	Description   string `json:"description" binding:"required"`
-	Creator       string `json:"creator" binding:"required"`
-	CreationDate  uint64 `json:"creationDate" binding:"required"`
-	TtlPhase1     uint64 `json:"ttl_phase_one" binding:"required"`
-	TtlPhase2     uint64 `json:"ttl_phase_two" binding:"required"`
-	FundingAmount uint64 `json:"fundingAmount" binding:"required"`
-	FundingDate   uint64 `json:"fundingDate" binding:"required"`
-	Price         uint64 `json:"price" binding:"required"`
-	Quantity      uint64 `json:"quantity"`
+	SecurityId       string `json:"security_id"`
+	Title            string `json:"title" binding:"required"`
+	Description      string `json:"description" binding:"required"`
+	Creator          string `json:"creator" binding:"required"`
+	CreationDate     uint64 `json:"creationDate" binding:"required"`
+	TtlPhase1        uint64 `json:"ttl_phase_one" binding:"required"`
+	TtlPhase2        uint64 `json:"ttl_phase_two" binding:"required"`
+	FundingAmount    uint64 `json:"fundingAmount" binding:"required"`
+	FundingRemaining uint64 `json:"fundingRemaining" binding:"required"`
+	FundingDate      uint64 `json:"fundingDate" binding:"required"`
+	Price            uint64 `json:"price" binding:"required"`
+	Quantity         uint64 `json:"quantity"`
 }
 
 type SecuritySearchRequest struct {
@@ -100,17 +101,17 @@ func GetSecurityAdapter(c *gin.Context, db *sql.DB) {
 
 func parseSecurity(rows *sql.Rows) (Security, error) {
 	var creationDate time.Time
-	var fundingDate sql.NullInt64
+	var fundingDate sql.NullTime
 	var price sql.NullInt64
 	var security Security
-	err := rows.Scan(&security.SecurityId, &security.Title, &security.Description, &security.Creator, &creationDate, &security.TtlPhase1, &security.TtlPhase2, &security.FundingAmount, &fundingDate, &price, &security.Quantity)
+	err := rows.Scan(&security.SecurityId, &security.Title, &security.Description, &security.Creator, &creationDate, &security.TtlPhase1, &security.TtlPhase2, &security.FundingAmount, &security.FundingRemaining, &fundingDate, &price, &security.Quantity)
 	if err != nil {
 		fmt.Println(err)
 		return security, err
 	}
 	security.CreationDate = uint64(creationDate.Unix())
 	if fundingDate.Valid {
-		security.FundingDate = uint64(fundingDate.Int64)
+		security.FundingDate = uint64(fundingDate.Time.Unix())
 	}
 	if price.Valid {
 		security.Price = uint64(price.Int64)
