@@ -20,11 +20,15 @@ func registerRoutes(r *gin.Engine, db *sql.DB) {
 		endpoint.OrderHistory(c, db)
 	})
 
-	r.GET("order/history/all", func(c *gin.Context) {
+	r.GET("match/history", func(c *gin.Context) {
 		endpoint.AllHistory(c, db)
 	})
 
 	r.GET("order/value", func(c *gin.Context) {
 		endpoint.PortfolioValue(c, db)
+	})
+
+	r.GET("trending", func(c *gin.Context) {
+		endpoint.Trending(c, db)
 	})
 }
