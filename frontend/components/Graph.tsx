@@ -1,8 +1,9 @@
 import { Line } from "@nivo/line";
 
 export function Graph({ timeseries }: { timeseries: Timeseries }) {
-  let positive = [];
-  let negative = [];
+  // Ziel ist https://nivo.rocks/storybook/?path=/docs/line--highlighting-negative-values
+  let positive: Timeseries = [];
+  let negative: Timeseries = [];
 
   const firstPrice = timeseries[0].price;
   const firstTimestamp = timeseries[0].timestamp;
@@ -11,9 +12,13 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
     point.timestamp -= firstTimestamp;
     if (point.price < firstPrice) {
       negative.push(point);
+      // @ts-ignore
+      positive.push({ timestamp: point.timestamp, price: null });
       break;
     }
     positive.push(point);
+    // @ts-ignore
+    negative.push({ timestamp: point.timestamp, price: null });
   }
   positive = positive.map((t) => {
     return { x: t.timestamp, y: t.price };
