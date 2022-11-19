@@ -7,6 +7,7 @@ import React from "react";
 import { Graph } from "../components/Graph";
 import Link from "next/link";
 import { TrendingList } from "../components/TrendingList";
+import query from "../query";
 
 export async function getServerSideProps() {
   // const res = await fetch("");

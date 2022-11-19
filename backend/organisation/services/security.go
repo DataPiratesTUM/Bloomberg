@@ -15,6 +15,7 @@ const (
 	GetSecuritySql      string = "SELECT  s.*, p.sell_price, 0 AS qty FROM  securities s LEFT JOIN ( SELECT m.security, m.sell_price FROM matches m WHERE m.id = (SELECT m2.id FROM matches m2 WHERE m2.security = m.security ORDER BY creation_date DESC LIMIT 1) ) AS p ON p.security = s.id WHERE s.id = $1"
 	GetAllSecuritiesSql string = "SELECT  s.*,  p.sell_price, tq.qty FROM  securities s,  (   SELECT    tmp.security,    SUM(tmp.qty) AS qty   FROM (    SELECT      m.security,      (CASE       WHEN buyer = $1 THEN m.quantity      ELSE (-1) * m.quantity     END) AS qty    FROM matches m WHERE buyer = $1 OR seller = $1   ) AS tmp   GROUP BY tmp.security  ) AS tq,  (   SELECT m.security, m.sell_price FROM matches m WHERE m.id = (SELECT m2.id FROM matches m2 WHERE m2.security = m.security ORDER BY creation_date DESC LIMIT 1)  ) AS p WHERE tq.security = s.id AND p.security = s.id"
 	DeleteSecuritySql   string = "DELETE FROM securities WHERE id = $1 AND creator = $2"
+	SearchSecuritySql   string = "SELECT s.id, s.name FROM securities s WHERE s.name LIKE ('%' || $1 || '%') LIMIT 10"
 )
 
 type CreateSecurityReqest struct {
@@ -37,6 +38,15 @@ type Security struct {
 	FundingDate  uint64 `json:"FundingDate" binding:"required"`
 	Price        uint64 `json:"Price" binding:"required"`
 	Quantity     uint64 `json:"Quantity"`
+}
+
+type SecuritySearchRequest struct {
+	Query string `json:"Query" binding:"required"`
+}
+
+type RawSecurity struct {
+	Id   string `json:"Id" binding:"required"`
+	Name string `json:"Name" binding:"required"`
 }
 
 func CreateSecurity(c *gin.Context, db *sql.DB) {
@@ -192,4 +202,37 @@ func DeleteSecurity(c *gin.Context, db *sql.DB) {
 	}
 
 	c.Status(http.StatusOK)
+}
+
+func SearchSecurity(c *gin.Context, db *sql.DB) {
+
+	//Parse body
+	var req SecuritySearchRequest
+	if err := c.BindJSON(&req); err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	//Query the database for the security or all securities
+	rows, err := db.Query(SearchSecuritySql, req.Query)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	//Parse results
+	securities := make([]RawSecurity, 0)
+	for rows.Next() {
+		var id string
+		var name string
+		err := rows.Scan(&id, &name)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		securities = append(securities, RawSecurity{id, name})
+	}
+
+	c.JSON(http.StatusOK, securities)
 }
