@@ -38,6 +38,10 @@ export async function getServerSideProps() {
       { timestamp: 1668821799865, price: 670 },
       { timestamp: 1668821899865, price: 589 },
       { timestamp: 1668821999865, price: 400 },
+      { timestamp: 1668822099865, price: 567 },
+      { timestamp: 1668822199865, price: 670 },
+      { timestamp: 1668822299865, price: 589 },
+      { timestamp: 1668822399865, price: 400 },
     ],
   };
 
