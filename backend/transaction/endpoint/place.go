@@ -131,12 +131,6 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		sendError(c, http.StatusInternalServerError, err)
-		return
-	}
-
 	orderSide := body.Side == "buy"
 
 	//Check if the user has enourgh shares to sell
@@ -178,6 +172,12 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 		}
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		sendError(c, http.StatusInternalServerError, err)
+		return
+	}
+
 	//Check if the security is in phase 1 and funding_date is not set. THen calculate current price based on a linear function. Check if funding has been reached
 	if orderSide {
 		rows, err := db.Query(
@@ -186,11 +186,13 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 		)
 		if err != nil {
 			sendError(c, http.StatusInternalServerError, err)
+			tx.Rollback()
 			return
 		}
 		defer rows.Close()
 		if !rows.Next() {
 			c.Status(http.StatusNotFound)
+			tx.Rollback()
 			return
 		}
 		var creationDate time.Time
@@ -201,6 +203,7 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 
 		if err = rows.Scan(&creationDate, &ttl1, &funding_date, &funding_goal, &funding_remaining); err != nil {
 			sendError(c, http.StatusInternalServerError, err)
+			tx.Rollback()
 			return
 		}
 
@@ -208,12 +211,13 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 		if !funding_date.Valid {
 			if time.Now().After(creationDate.Add(time.Duration(ttl1) * time.Second)) {
 				c.Status(http.StatusBadRequest)
+				tx.Rollback()
 				return
 			} else {
 				diff := time.Since(creationDate).Seconds()
 
-				m := (-funding_goal / 1000) / (ttl1 / 86400)
-				currentPrice := m*((ttl1-int64(diff))/86400) + (funding_goal / 1000)
+				m := (-1000) / (ttl1 / 86400)
+				currentPrice := m*((ttl1-int64(diff))/86400) + (1000)
 				if currentPrice < 0 {
 					currentPrice = 0
 				}
