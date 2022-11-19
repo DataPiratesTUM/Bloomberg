@@ -15,9 +15,7 @@ func registerRoutes(r *gin.Engine, db *sql.DB) {
 	r.GET("/user/:id", func(c *gin.Context) {
 		services.GetUserAdapter(c, db)
 	})
-	r.POST("/user/:id/balance", func(c *gin.Context) {
-		services.ChangeBalance(c, db)
-	})
+
 	/*
 		Routes to manage organisations
 	*/
