@@ -27,17 +27,17 @@ type CreateSecurityReqest struct {
 }
 
 type Security struct {
-	Id           string `json:"Id"`
-	Name         string `json:"Name" binding:"required"`
-	Description  string `json:"Description" binding:"required"`
-	Creator      string `json:"Creator" binding:"required"`
-	CreationDate uint64 `json:"CreationDate" binding:"required"`
-	TtlPhase1    uint64 `json:"TtlPhase1" binding:"required"`
-	TtlPhase2    uint64 `json:"TtlPhase2" binding:"required"`
-	FundingGoal  uint64 `json:"FundingGoal" binding:"required"`
-	FundingDate  uint64 `json:"FundingDate" binding:"required"`
-	Price        uint64 `json:"Price" binding:"required"`
-	Quantity     uint64 `json:"Quantity"`
+	SecurityId    string `json:"security_id"`
+	Title         string `json:"title" binding:"required"`
+	Description   string `json:"description" binding:"required"`
+	Creator       string `json:"creator" binding:"required"`
+	CreationDate  uint64 `json:"creationDate" binding:"required"`
+	TtlPhase1     uint64 `json:"ttl_phase_one" binding:"required"`
+	TtlPhase2     uint64 `json:"ttl_phase_two" binding:"required"`
+	FundingAmount uint64 `json:"fundingAmount" binding:"required"`
+	FundingDate   uint64 `json:"fundingDate" binding:"required"`
+	Price         uint64 `json:"price" binding:"required"`
+	Quantity      uint64 `json:"quantity"`
 }
 
 type SecuritySearchRequest struct {
