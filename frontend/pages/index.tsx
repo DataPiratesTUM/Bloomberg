@@ -96,32 +96,36 @@ interface Home {
   user: User;
   trending: TrendingList;
 }
+interface Result {
+  Id: string;
+  Name: string;
+}
 
 export default function Home(props: Home) {
   const [isSearching, setSearching] = useState(false);
   const [searchText, setSearchText] = useState("");
-
+  const [response, setResponse] = useState<Result[] | null>(null);
+  let searchResult: Result;
   const searchFunc = async (data: string) => {
     var requestOptions = {
       method: "GET",
     };
 
     const dataReq = await fetch(
-      "http://localhost:3002/security/search?query=" + data,
+      "http://localhost:3002/security/search/title?query=" + data,
       requestOptions
     )
-      .then((response) => response.text())
-      .then((result) => console.log(result))
+      .then((response) => response.json())
+      .then((result) => setResponse(result))
       .catch((error) => console.log("error", error));
-    console.log(dataReq);
     return dataReq;
   };
 
   const inputHandler = (e: any) => {
     var search = e.target.value;
     setSearchText(search);
-    searchText.length > 1 ? setSearching(true) : setSearching(false);
-    searchFunc(searchText);
+    search.length >= 1 ? setSearching(true) : setSearching(false);
+    searchFunc(search);
   };
 
   const { user } = props;
@@ -139,6 +143,77 @@ export default function Home(props: Home) {
     },
   };
 
+  const pageNotSearching = (
+    <section className="grid grid-rows-[0.5fr_2fr_2fr] grid-cols-2 gap-2">
+      <section>
+        <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4 basis-3/4">
+          Hello, {user.name}{" "}
+        </h2>
+      </section>
+
+      <section className="row-span-2">
+        <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">
+          Your assets
+        </h3>
+        {user.securities.map((security) => {
+          const percentageReturn =
+            (security.price / security.price_bought - 1) * 100;
+          return (
+            <Link
+              href={"/securities/" + security.id}
+              key={security.id}
+              className="  border shadow rounded my-2 p-4 flex justify-between items-center"
+            >
+              <p>{security.name}</p>
+              <div className="flex justify-center items-center ">
+                {(security.qty * security.price) / 100}€
+                <div
+                  className={`p-2 rounded ml-5 ${
+                    percentageReturn > 0 ? "bg-green-300" : "bg-red-300"
+                  }`}
+                >
+                  {percentageReturn.toFixed(2)}%
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </section>
+      <section className=" flex flex-col justify-center">
+        <p className="text-xl mb-6">
+          Your futures are worth {user.balance / 100}€ in total
+        </p>
+
+        <Graph timeseries={user.timeseries} />
+      </section>
+      <section className="col-start-1 col-span-2">
+        <TrendingList trendingList={trending} />
+      </section>
+    </section>
+  );
+
+  const pageSearching = (
+    <div>
+      {response?.length === 0 || response == null ? (
+        <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4 basis-3/4">
+          NOTHING FOUND
+        </h2>
+      ) : (
+        response!.map((result) => {
+          return (
+            <Link href={"/securities/" + result.Id} key={result.Id}>
+              <div className=" m-2 border shadow rounded my-2 p-4 flex justify-between">
+                <p>{result.Name}</p>
+              </div>
+            </Link>
+          );
+        })
+      )}
+    </div>
+  );
+
+  const isLoadingPage = isSearching ? pageSearching : pageNotSearching;
+
   return (
     <>
       <Head>
@@ -146,50 +221,7 @@ export default function Home(props: Home) {
         <meta name="description" content="Research Trading Platform" />
         <link rel="icon" href="/favicon.svg" />
       </Head>
-      <Layout inputHandler={inputHandler}>
-        <section className="grid grid-rows-[0.5fr_2fr_2fr] grid-cols-2 gap-2">
-          <section>
-            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4 basis-3/4">
-              Hello, {user.name}{" "}
-              {isSearching == true ? "Searching" : "Not searching"}
-            </h2>
-          </section>
-
-          <section className="row-span-2">
-            <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">Your assets</h3>
-            {user.securities.map((security) => {
-              const percentageReturn = (security.price / security.price_bought - 1) * 100;
-              return (
-                <Link
-                  href={"/securities/" + security.id}
-                  key={security.id}
-                  className="  border shadow rounded my-2 p-4 flex justify-between items-center"
-                >
-                  <p>{security.name}</p>
-                  <div className="flex justify-center items-center ">
-                    {(security.qty * security.price) / 100}€
-                    <div
-                      className={`p-2 rounded ml-5 ${
-                        percentageReturn > 0 ? "bg-green-300" : "bg-red-300"
-                      }`}
-                    >
-                      {percentageReturn.toFixed(2)}%
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </section>
-          <section className=" flex flex-col justify-center">
-            <p className="text-xl mb-6">Your futures are worth {user.balance / 100}€ in total</p>
-
-            <Graph timeseries={user.timeseries} />
-          </section>
-          <section className="col-start-1 col-span-2">
-            <TrendingList trendingList={trending} />
-          </section>
-        </section>
-      </Layout>
+      <Layout inputHandler={inputHandler}>{isLoadingPage}</Layout>
     </>
   );
 }
