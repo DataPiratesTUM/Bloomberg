@@ -8,23 +8,19 @@ import (
 )
 
 const (
-	GetUserSql    string = "SELECT u.name, u.balance FROM users u WHERE u.id = $1"
-	AddBalanceSQL        = "UPDATE users SET balance = (balance + $1);"
-)
-
-const (
-	Withdraw uint8 = 0
-	Deposit        = 1
+	GetUserSql       string = "SELECT u.name, u.balance FROM users u WHERE u.id = $1"
+	AddBalanceSQL           = "UPDATE users SET balance = (balance + $1) WHERE id = $2"
+	RemoveBalanceSQL        = "UPDATE users SET balance = (balance - $1) WHERE id = $2"
 )
 
 type BalanceRequest struct {
-	Action uint8
-	Amount uint64
+	IsWithdraw bool   `json:"IsWithdraw"`
+	Amount     uint64 `json:"Amount"`
 }
 
 type User struct {
-	Name    string
-	Balance uint64
+	Name    string `json:"Name"`
+	Balance uint64 `json:"Balance"`
 }
 
 func GetUser(c *gin.Context, db *sql.DB) {
@@ -57,18 +53,25 @@ func GetUser(c *gin.Context, db *sql.DB) {
 
 func ChangeBalance(c *gin.Context, db *sql.DB) {
 	//Gets the uuid of the requesting user (Header: "x-user-id")
-	uuid, exists := getHeaderUuid(c)
-	_ = uuid
-	if !exists {
-		c.Status(http.StatusUnauthorized)
-		return
-	}
+	uuid := c.Param("id")
 
 	//Parses the body to obtain the request as a struct
 	var req BalanceRequest
-	if err := c.ShouldBindJSON(&req); err == nil {
+	if err := c.BindJSON(&req); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
+	query := AddBalanceSQL
+	if req.IsWithdraw {
+		query = RemoveBalanceSQL
+	}
+	res, err := db.Exec(query, req.Amount, uuid)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	_ = res
+	c.Status(http.StatusOK)
 }

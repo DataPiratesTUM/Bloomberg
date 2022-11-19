@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS "users" (
     "balance"       INT             NOT NULL DEFAULT 0 CHECK ("balance" >= 0)
 );
 
-CREATE TABLE IF NOT EXISTS "organization" (
+CREATE TABLE IF NOT EXISTS "organisation" (
     "id"            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
     "name"          VARCHAR (50)    NOT NULL UNIQUE
 );
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS "security" (
     "id"            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
     "name"          VARCHAR (50)    NOT NULL UNIQUE,
     "description"   TEXT            NOT NULL,
-    "creator"       uuid            NOT NULL REFERENCES "organization" ("id"),
+    "creator"       uuid            NOT NULL REFERENCES "organisation" ("id"),
     "creation_date" DATE            NOT NULL DEFAULT now(),
     "ttl_1"         DATE            NOT NULL CHECK ("ttl_1" > "creation_date"),
     "ttl_2"         DATE            NOT NULL CHECK ("ttl_2" > "ttl_1")

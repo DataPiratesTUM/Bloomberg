@@ -21,7 +21,9 @@ func registerRoutes(r *gin.Engine, db *sql.DB) {
 	/*
 		Routes to manage organisations
 	*/
-	r.GET("/organization/:id")
+	r.GET("/organisation/:id", func(c *gin.Context) {
+		services.GetOrganization(c, db)
+	})
 
 	/*
 		Routes to manage securities
