@@ -73,6 +73,7 @@ func findMatches(tx *sql.Tx, user string, security string, side bool, price int6
 
 		rows = r
 	}
+	defer rows.Close()
 
 	for rows.Next() && quantity > 0 {
 		var other order
@@ -107,10 +108,6 @@ func findMatches(tx *sql.Tx, user string, security string, side bool, price int6
 				quantity:  transactionQuantity,
 			})
 		}
-	}
-
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 
 	for _, tr := range transactions {
@@ -162,6 +159,7 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 			sendError(c, http.StatusInternalServerError, snErr)
 			return
 		}
+		defer sn.Close()
 
 		if !sn.Next() {
 			c.Status(http.StatusForbidden)
@@ -190,6 +188,7 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 			sendError(c, http.StatusInternalServerError, err)
 			return
 		}
+		defer rows.Close()
 		if !rows.Next() {
 			c.Status(http.StatusNotFound)
 			return
