@@ -1,4 +1,4 @@
-package database
+package lib
 
 import (
 	"database/sql"
@@ -21,7 +21,7 @@ func open() (*sql.DB, error) {
 	return sql.Open("postgres", connStr)
 }
 
-func Open() *sql.DB {
+func OpenDatabase() *sql.DB {
 	for {
 		db, err := open()
 		if err != nil {

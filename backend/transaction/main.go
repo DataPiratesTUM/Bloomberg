@@ -3,13 +3,13 @@ package main
 import (
 	"net/http"
 
-	"bloomberg/transaction/database"
+	"bloomberg/transaction/lib"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	db := database.Open()
+	db := lib.OpenDatabase()
 	_ = db
 
 	r := gin.Default()
