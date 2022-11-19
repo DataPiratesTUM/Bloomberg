@@ -212,51 +212,55 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 			} else {
 				diff := time.Since(creationDate).Seconds()
 
-				m := -funding_goal / (ttl1 / 86400)
-				currentPrice := m*((ttl1-int64(diff))/86400) + funding_goal
+				m := (-funding_goal / 1000) / (ttl1 / 86400)
+				currentPrice := m*((ttl1-int64(diff))/86400) + (funding_goal / 1000)
 				if currentPrice < 0 {
 					currentPrice = 0
 				}
 
-				var tmp int64
-				fullyFunded := false
-				if funding_remaining-body.Quantity*currentPrice < currentPrice {
-					tmp = body.Quantity - funding_remaining/currentPrice
-					body.Quantity = funding_remaining / currentPrice
-					fullyFunded = true
-				}
-				fmt.Println(body.Quantity)
+				//If the price is to high dont buy
+				if currentPrice < body.Price {
 
-				//Insert a match without a seller to indicate initial shares
-				_, err = tx.Exec(
-					`INSERT INTO "matches" ("security", "buyer", "buy_price", "sell_price", "quantity") VALUES ($1, $2, $3, $4, $5);`,
-					body.Security,
-					user,
-					body.Price,
-					currentPrice,
-					body.Quantity,
-				)
+					var tmp int64
+					fullyFunded := false
+					if funding_remaining-body.Quantity*currentPrice < currentPrice {
+						tmp = body.Quantity - funding_remaining/currentPrice
+						body.Quantity = funding_remaining / currentPrice
+						fullyFunded = true
+					}
+					fmt.Println(body.Quantity)
 
-				if err != nil {
-					sendError(c, http.StatusInternalServerError, err)
-					tx.Rollback()
-					return
-				}
-
-				//Check if phase 1 should be ended
-				if fullyFunded {
+					//Insert a match without a seller to indicate initial shares
 					_, err = tx.Exec(
-						`UPDATE securities SET funding_date = $1 WHERE id = $2`,
-						time.Now(),
+						`INSERT INTO "matches" ("security", "buyer", "buy_price", "sell_price", "quantity") VALUES ($1, $2, $3, $4, $5);`,
 						body.Security,
+						user,
+						body.Price,
+						currentPrice,
+						body.Quantity,
 					)
+
 					if err != nil {
 						sendError(c, http.StatusInternalServerError, err)
+						tx.Rollback()
+						return
 					}
-				}
 
-				if tmp > 0 {
-					body.Quantity = tmp
+					//Check if phase 1 should be ended
+					if fullyFunded {
+						_, err = tx.Exec(
+							`UPDATE securities SET funding_date = $1 WHERE id = $2`,
+							time.Now(),
+							body.Security,
+						)
+						if err != nil {
+							sendError(c, http.StatusInternalServerError, err)
+						}
+					}
+
+					if tmp > 0 {
+						body.Quantity = tmp
+					}
 				}
 
 			}
