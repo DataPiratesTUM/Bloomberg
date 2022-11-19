@@ -31,4 +31,8 @@ func registerRoutes(r *gin.Engine, db *sql.DB) {
 	r.GET("trending", func(c *gin.Context) {
 		endpoint.Trending(c, db)
 	})
+
+	r.GET("open_orders/:id", func(c *gin.Context) {
+		endpoint.OpenOrders(c, db)
+	})
 }
