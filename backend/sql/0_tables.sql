@@ -1,24 +1,27 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE IF NOT EXISTS users (
-    id            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name          VARCHAR (50)    NOT NULL UNIQUE,
-    balance       INT             NOT NULL DEFAULT 0 CHECK (balance >= 0)
-);
-
 CREATE TABLE IF NOT EXISTS organisations (
     id            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
     name          VARCHAR (50)    NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name          VARCHAR (50)    NOT NULL UNIQUE,
+    balance       INT             NOT NULL DEFAULT 0 CHECK (balance >= 0),
+    organisation  uuid            REFERENCES organisations (id)
 );
 
 CREATE TABLE IF NOT EXISTS securities (
     id            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
     name          VARCHAR (50)    NOT NULL UNIQUE,
     description   TEXT            NOT NULL,
-    creator       uuid            NOT NULL REFERENCES organisations (id),
+    creator       uuid            NOT NULL REFERENCES users (id),
     creation_date DATE            NOT NULL DEFAULT now(),
-    ttl_1         DATE            NOT NULL CHECK (ttl_1 > creation_date),
-    ttl_2         DATE            NOT NULL CHECK (ttl_2 > ttl_1)
+    ttl_1         INT             NOT NULL CHECK (ttl_1 > 0),
+    ttl_2         INT             NOT NULL CHECK (ttl_2 > ttl_1),
+    funding_goal  INT             NOT NULL CHECK (funding_goal > 0),
+    funding_date  DATE            CHECK (funding_date < to_timestamp(ttl_1))
 );
 
 CREATE TABLE IF NOT EXISTS orders (
