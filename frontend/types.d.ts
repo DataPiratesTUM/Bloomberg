@@ -35,29 +35,26 @@ declare interface Security {
   ttl_phase_two: number;
   price: number;
   quantity: number;
-  // timeseries: Timeseries;
-  // orders: Order[];
 }
 
 declare interface User {
-  user_id: string;
-  name: string;
-  balance: number;
-  securities: {
-    id: string;
-    name: string;
-    qty: number;
-    price: number;
-    price_bought: number;
-  }[];
-  timeseries: Timeseries;
+  Name: string;
+  OrganisationId: string;
+  // user_id: string;
+  // name: string;
+  // balance: number;
+  // securities: {
+  //   id: string;
+  //   name: string;
+  //   qty: number;
+  //   price: number;
+  //   price_bought: number;
+  // }[];
+  // timeseries: Timeseries;
 }
 
-declare interface TrendingList {
-  trendings: TrendingSec[];
-}
-
-declare interface TrendingSec {
-  security_id: string;
-  title: string;
+declare type Trending = string[];
+declare interface SecurityOverview {
+  Id: string;
+  Name: string;
 }

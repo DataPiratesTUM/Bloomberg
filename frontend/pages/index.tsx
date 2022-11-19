@@ -27,144 +27,34 @@ export async function getServerSideProps() {
 
   let res_user_trending = fetch("https://transaction.ban.app/trending");
 
-  let [json_user, json_user_securities, json_user_portfolio, json_user_trending] =
-    await Promise.all([res_user, res_user_securities, res_user_portfolio, res_user_trending]);
-  console.log(json_user_securities.body);
+  let [
+    json_user,
+    json_user_securities,
+    json_user_portfolio,
+    json_user_trending,
+  ] = await Promise.all([
+    res_user,
+    res_user_securities,
+    res_user_portfolio,
+    res_user_trending,
+  ]);
   const user: User = await json_user.json();
-  const securites: Security[] = await json_user_securities.json();
+  const securities: Security[] = await json_user_securities.json();
   const portfolio: Portfolio[] = await json_user_portfolio.json();
-  const trending: string[] = await json_user_trending.json();
-  return { props: { user, trending } };
-
-  // Mock data
-  // let user: User = {
-  //   user_id: "123",
-  //   name: "Cole Friedlaender",
-  //   balance: 12345,
-  //   securities: [
-  //     {
-  //       name: "Does the Higgs-Boson exist? ",
-  //       id: "1234",
-  //       qty: 4,
-  //       price: 938,
-  //       price_bought: 378,
-  //     },
-  //     {
-  //       name: "Does sitting during a hackathon for 24 hours cause diabetis?",
-  //       id: "1235",
-  //       qty: 38,
-  //       price: 333,
-  //       price_bought: 546,
-  //     },
-  //     {
-  //       name: "Does sitting during a hackathon for 24 hours cause diabetis?",
-  //       id: "1236",
-  //       qty: 38,
-  //       price: 333,
-  //       price_bought: 546,
-  //     },
-  //     {
-  //       name: "Does sitting during a hackathon for 24 hours cause diabetis?",
-  //       id: "1237",
-  //       qty: 38,
-  //       price: 333,
-  //       price_bought: 546,
-  //     },
-  //     {
-  //       name: "Does sitting during a hackathon for 24 hours cause diabetis?",
-  //       id: "1238",
-  //       qty: 38,
-  //       price: 333,
-  //       price_bought: 546,
-  //     },
-  //   ],
-  //   timeseries: [
-  //     { timestamp: Date.now(), price: 567 },
-  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 1, price: 670 },
-  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 2, price: 589 },
-  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 3, price: 400 },
-  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 4, price: 567 },
-  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 5, price: 670 },
-  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 6, price: 589 },
-  //     { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 7, price: 400 },
-  //   ],
-  // };
+  const trending: Trending = await json_user_trending.json();
+  console.log(securities);
+  return { props: { user, trending, securities, portfolio } };
 }
 
 interface Home {
   user: User;
-  trending: TrendingList;
-}
-interface Result {
-  Id: string;
-  Name: string;
+  securities: Security[];
+  portfolio: Portfolio[];
+  trending: Trending;
 }
 
-export default function Home(props: Home) {
-  const { user } = props;
-  const { trending } = props;
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top" as const,
-      },
-      title: {
-        display: true,
-        text: "Chart.js Line Chart",
-      },
-    },
-  };
-
-  const pageNotSearching = (
-    <section className="grid grid-rows-[0.5fr_2fr_2fr] grid-cols-2 gap-2">
-      <section>
-        <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4 basis-3/4">
-          Hello, {user.name}{" "}
-        </h2>
-      </section>
-
-      <section className="row-span-2">
-        <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">
-          Your assets
-        </h3>
-        {user.securities.map((security) => {
-          const percentageReturn =
-            (security.price / security.price_bought - 1) * 100;
-          return (
-            <Link
-              href={"/securities/" + security.id}
-              key={security.id}
-              className="  border shadow rounded my-2 p-4 flex justify-between items-center"
-            >
-              <p>{security.name}</p>
-              <div className="flex justify-center items-center ">
-                {(security.qty * security.price) / 100}€
-                <div
-                  className={`p-2 rounded ml-5 ${
-                    percentageReturn > 0 ? "bg-green-300" : "bg-red-300"
-                  }`}
-                >
-                  {percentageReturn.toFixed(2)}%
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-      </section>
-      <section className=" flex flex-col justify-center">
-        <p className="text-xl mb-6">
-          Your futures are worth {user.balance / 100}€ in total
-        </p>
-
-        <Graph timeseries={user.timeseries} />
-      </section>
-      <section className="col-start-1 col-span-2">
-        <TrendingList trendingList={trending} />
-      </section>
-    </section>
-  );
-
+export default function Home({ user, securities, portfolio, trending }: Home) {
+  console.log(securities, user, trending, portfolio);
   return (
     <>
       <Head>
@@ -172,7 +62,59 @@ export default function Home(props: Home) {
         <meta name="description" content="Research Trading Platform" />
         <link rel="icon" href="/favicon.svg" />
       </Head>
-      <Layout>{pageNotSearching}</Layout>
+      <Layout>
+        <section className="grid grid-rows-[0.5fr_2fr_2fr] grid-cols-2 gap-2">
+          <section>
+            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4 basis-3/4">
+              Hello, {user.Name}
+            </h2>
+          </section>
+
+          <section className="row-span-2">
+            <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">
+              Your assets
+            </h3>
+            {securities.map((security) => {
+              // const percentageReturn = (security.price / security.price_bought - 1) * 100;
+              return (
+                <Link
+                  href={"/securities/" + security.security_id}
+                  key={security.security_id}
+                  className="  border shadow rounded my-2 p-4 flex justify-between items-center"
+                >
+                  <h3>{security.title}</h3>
+                  <p>{security.description}</p>
+                  <div className="flex justify-center items-center ">
+                    {(security.quantity * security.price) / 1000}€
+                    {/* <div
+                      className={`p-2 rounded ml-5 ${
+                        percentageReturn > 0 ? "bg-green-300" : "bg-red-300"
+                      }`}
+                    >
+                      {percentageReturn.toFixed(2)}%
+                    </div> */}
+                  </div>
+                </Link>
+              );
+            })}
+          </section>
+          <section className=" flex flex-col justify-center">
+            <p className="text-xl mb-6">
+              Your securities are worth{" "}
+              {portfolio[portfolio.length - 1].value / 1000}€ in total
+            </p>
+
+            <Graph
+              timeseries={portfolio.map((p) => {
+                return { timestamp: p.time, price: p.value };
+              })}
+            />
+          </section>
+          <section className="col-start-1 col-span-2">
+            <TrendingList trending={trending} />
+          </section>
+        </section>
+      </Layout>
     </>
   );
 }
