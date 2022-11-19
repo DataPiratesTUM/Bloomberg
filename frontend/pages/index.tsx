@@ -102,32 +102,6 @@ interface Result {
 }
 
 export default function Home(props: Home) {
-  const [isSearching, setSearching] = useState(false);
-  const [searchText, setSearchText] = useState("");
-  const [response, setResponse] = useState<Result[] | null>(null);
-  let searchResult: Result;
-  const searchFunc = async (data: string) => {
-    var requestOptions = {
-      method: "GET",
-    };
-
-    const dataReq = await fetch(
-      "http://localhost:3002/security/search/title?query=" + data,
-      requestOptions
-    )
-      .then((response) => response.json())
-      .then((result) => setResponse(result))
-      .catch((error) => console.log("error", error));
-    return dataReq;
-  };
-
-  const inputHandler = (e: any) => {
-    var search = e.target.value;
-    setSearchText(search);
-    search.length >= 1 ? setSearching(true) : setSearching(false);
-    searchFunc(search);
-  };
-
   const { user } = props;
   const { trending } = props;
   const options = {
@@ -192,28 +166,6 @@ export default function Home(props: Home) {
     </section>
   );
 
-  const pageSearching = (
-    <div>
-      {response?.length === 0 || response == null ? (
-        <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4 basis-3/4">
-          NOTHING FOUND
-        </h2>
-      ) : (
-        response!.map((result) => {
-          return (
-            <Link href={"/securities/" + result.Id} key={result.Id}>
-              <div className=" m-2 border shadow rounded my-2 p-4 flex justify-between">
-                <p>{result.Name}</p>
-              </div>
-            </Link>
-          );
-        })
-      )}
-    </div>
-  );
-
-  const isLoadingPage = isSearching ? pageSearching : pageNotSearching;
-
   return (
     <>
       <Head>
@@ -221,7 +173,7 @@ export default function Home(props: Home) {
         <meta name="description" content="Research Trading Platform" />
         <link rel="icon" href="/favicon.svg" />
       </Head>
-      <Layout inputHandler={inputHandler}>{isLoadingPage}</Layout>
+      <Layout>{pageNotSearching}</Layout>
     </>
   );
 }
