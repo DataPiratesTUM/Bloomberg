@@ -1,18 +1,13 @@
-import { Line } from "@nivo/line";
+import { Line, ResponsiveLine } from "@nivo/line";
 
 interface Dot {
-  x: number;
+  x: string;
   y: number | null;
 }
 // @ts-ignore
 const CustomSymbol = ({ size, color, borderWidth, borderColor }) => (
   <g>
-    <circle
-      fill="#fff"
-      r={size / 2}
-      strokeWidth={borderWidth}
-      stroke={borderColor}
-    />
+    <circle fill="#fff" r={size / 2} strokeWidth={borderWidth} stroke={borderColor} />
     <circle
       r={size / 5}
       strokeWidth={borderWidth}
@@ -24,6 +19,7 @@ const CustomSymbol = ({ size, color, borderWidth, borderColor }) => (
 );
 
 export function Graph({ timeseries }: { timeseries: Timeseries }) {
+  return <></>;
   // Ziel ist https://nivo.rocks/storybook/?path=/docs/line--highlighting-negative-values
   let positive: Dot[] = [];
   let negative: Dot[] = [];
@@ -32,40 +28,39 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
   const firstTimestamp = timeseries[0].timestamp;
 
   timeseries.forEach((point, i, series) => {
-    let dot = { x: point.timestamp - firstTimestamp, y: point.price };
-    let nullDot = { ...dot, y: null };
+    let dot = { x: new Date(point.timestamp).toISOString(), y: point.price };
+    // let nullDot = { ...dot, y: null };
     if (point.price < firstPrice) {
       if (series[i - 1].price > firstPrice) {
         // Wendepunkt
         const previousPoint = series[i - 1];
         negative.push({
-          x: previousPoint.timestamp - firstTimestamp,
+          x: new Date(previousPoint.timestamp).toISOString(),
           y: previousPoint.price,
         });
       }
       // Order of insertion matters
       negative.push(dot);
-      positive.push(nullDot);
+      //  positive.push(nullDot);
 
       if (series[i + 1] && series[i + 1].price >= firstPrice) {
         const nextPoint = series[i + 1];
         negative.push({
-          x: nextPoint.timestamp - firstTimestamp,
+          x: new Date(nextPoint.timestamp).toISOString(),
           y: nextPoint.price,
         });
       }
     } else {
-      negative.push(nullDot);
+      //  negative.push(nullDot);
       positive.push(dot);
     }
   });
 
   console.log(positive, negative);
   return (
-    <Line
+    <ResponsiveLine
       margin={{ top: 20, right: 20, bottom: 60, left: 80 }}
       animate={true}
-      enableSlices="x"
       width={700}
       height={400}
       data={[
@@ -78,7 +73,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
           data: negative,
         },
       ]}
-      curve="natural"
+      curve="linear"
       enablePointLabel={true}
       pointSize={14}
       pointBorderWidth={1}
@@ -90,21 +85,25 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
       enableGridX={false}
       colors={["rgb(97, 205, 187)", "rgb(244, 117, 96)"]}
       xScale={{
-        type: "linear",
+        type: "time",
+        format: "%Y-%m-%dT%H:%M:%SZ",
       }}
+      xFormat="time:%Y-%m-%dT%H:%M:%SZ"
       yScale={{
         type: "linear",
         stacked: false,
         min: 0,
-        max: 1000,
+        max: "auto",
       }}
       axisLeft={{
-        legend: "linear scale",
+        legend: "Portfolio value in €",
         legendOffset: 12,
       }}
       axisBottom={{
-        legend: "linear scale",
+        display: false,
+        legend: "Time",
         legendOffset: -12,
+        format: "%b %d",
       }}
       pointSymbol={CustomSymbol}
       enableArea={true}
