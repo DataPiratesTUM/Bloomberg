@@ -125,7 +125,11 @@ export default function Home({ securities }: AdminProps) {
         <br />
         {status === "loading" && <h1>Loading...</h1>}
         {status === "error" && <span>Error: {error.message}</span>}
-        {status === "success" && data.ma}
+        {status === "success" && data && data.map(match => {
+          return (
+            
+          )
+        })}
       </Layout>
     </>
   );
