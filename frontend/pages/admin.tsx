@@ -14,17 +14,21 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
+
 import { Match } from "../components/Match";
 
-// export async function getServerSideProps() {
-//   const res = await fetch(`http://localhost:3002/security/all`, {
-//     headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
-//   });
-//   const securities = res.json();
-//   return { props: { securities } };
-// }
+export async function getServerSideProps() {
+  const res = await fetch("https://organisation.ban.app/security/search/title/?query=");
+  const securities: SecurityOverview[] = await res.json();
 
-export default function Admin() {
+  return { props: { securities } };
+}
+
+interface Admin {
+  securities: SecurityOverview[];
+}
+
+export default function Admin({ securities }: Admin) {
   const queryClient = useQueryClient();
   const [speed, setSpeed] = useState(1000);
   const [simulate, setSimulate] = useState(false);
@@ -38,14 +42,8 @@ export default function Admin() {
       headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
     });
     const history: Match[] = await res.json();
+    console.log(history);
     return history;
-  });
-  const securities = useQuery(["securities"], async () => {
-    const res = await fetch("http://localhost:3002/security/all", {
-      headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
-    });
-    const s: Security[] = await res.json();
-    return s;
   });
 
   const orderMutation = useMutation(
@@ -65,9 +63,8 @@ export default function Admin() {
     const interval = setInterval(() => {
       const order: Order = {
         // securities.data
-        security:
-          //   ? securities.data[Math.floor(Math.random() * securities.data.length)].security_id :
-          "3e8b7701-9d3e-407a-b78a-d8fa4d07bff5",
+        security: securities[Math.floor(Math.random() * securities.length)].Id,
+
         price: Math.floor((varyingPrice(Date.now()) + Math.random() * 0.1) * 1000),
         quantity: Math.floor(Math.random() * 1000),
         side: Math.random() < 0.5 ? "sell" : "buy",
