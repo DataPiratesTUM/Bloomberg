@@ -53,13 +53,13 @@ func PortfolioValue(c *gin.Context, db *sql.DB) {
 	}
 	defer rows.Close()
 
-	values := make(map[string]int, 0)
+	values := make(map[string]int64, 0)
 	valuesJson := make([]gin.H, 0)
 
 	for rows.Next() {
 		var security string
 		var time time.Time
-		var value int
+		var value int64
 
 		if err := rows.Scan(&security, &time, &value); err != nil {
 			sendError(c, http.StatusInternalServerError, err)
@@ -68,7 +68,7 @@ func PortfolioValue(c *gin.Context, db *sql.DB) {
 
 		values[security] = value
 
-		valueSum := 0
+		var valueSum int64 = 0
 		for _, v := range values {
 			valueSum += v
 		}
