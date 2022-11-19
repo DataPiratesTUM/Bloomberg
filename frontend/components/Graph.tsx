@@ -5,8 +5,10 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
   let negative = [];
 
   const firstPrice = timeseries[0].price;
+  const firstTimestamp = timeseries[0].timestamp;
 
   for (const point of timeseries) {
+    point.timestamp -= firstTimestamp;
     if (point.price < firstPrice) {
       negative.push(point);
       break;
@@ -14,20 +16,16 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
     positive.push(point);
   }
   positive = positive.map((t) => {
-    const date = new Date(t.timestamp);
-    console.log(date.toISOString());
-    return { x: date.toISOString(), y: t.price };
+    return { x: t.timestamp, y: t.price };
   });
   negative = negative.map((t) => {
-    const date = new Date(t.timestamp);
-    console.log(date.toISOString());
-    return { x: date.toISOString(), y: t.price };
+    return { x: t.timestamp, y: t.price };
   });
   console.log(positive, negative);
   return (
     <Line
-      width={500}
-      height={300}
+      width={700}
+      height={400}
       data={[
         {
           id: "positive :)",
@@ -50,13 +48,15 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
       enableGridX={false}
       colors={["rgb(97, 205, 187)", "rgb(244, 117, 96)"]}
       xScale={{
-        type: "time",
-        format: "%Y-%m-%dT%H:%M:%S.%L%Z",
+        type: "linear",
+        min: -10000,
+        max: 350000,
       }}
-      xFormat="time:%Y-%m-%dT%H:%M"
       yScale={{
         type: "linear",
         stacked: false,
+        min: 0,
+        max: 1000,
       }}
       enableArea={true}
       areaOpacity={0.07}

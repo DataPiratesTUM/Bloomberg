@@ -5,6 +5,7 @@ import { Layout } from "../components/Layout";
 
 import React from "react";
 import { Graph } from "../components/Graph";
+import Link from "next/link";
 
 export async function getServerSideProps() {
   // const res = await fetch("");
@@ -12,14 +13,14 @@ export async function getServerSideProps() {
 
   // Mock data
   let user: User = {
-    id: "123",
+    user_id: "123",
     name: "Cole Friedlaender",
     balance: 12345,
     securities: [
       { name: "Does the Higgs-Boson exist? ", id: "1234", qty: 4, price: 938, price_bought: 378 },
       {
         name: "Does sitting during a hackathon for 24 hours cause diabetis?",
-        id: "1234",
+        id: "1235",
         qty: 38,
         price: 333,
         price_bought: 546,
@@ -36,9 +37,12 @@ export async function getServerSideProps() {
   return { props: { user } };
 }
 
+interface Home {
+  user: User;
+}
+
 export default function Home(props: Home) {
   const { user } = props;
-
   const options = {
     responsive: true,
     plugins: {
@@ -65,13 +69,27 @@ export default function Home(props: Home) {
         <p className="text-xl">Your futures are worth {user.balance / 100}€ in total</p>
         <Graph timeseries={user.timeseries} />
 
-        <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl pb-4">Your assets</h2>
-        {user.securities.map((security) => (
-          <section key={security.id} className="border shadow rounded my-2 p-4 ">
-            {security.name} {(security.qty * security.price) / 100}€{" "}
-            {(security.price / security.price_bought).toFixed(2)}%
-          </section>
-        ))}
+        <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl py-4">Your assets</h2>
+        {user.securities.map((security) => {
+          const percentageReturn = (security.price / security.price_bought - 1) * 100;
+          return (
+            <Link
+              href={"/securities/" + security.id}
+              key={security.id}
+              className="max-w-lg  border shadow rounded my-2 p-4 flex justify-between"
+            >
+              <p>{security.name}</p>
+              <div>
+                {(security.qty * security.price) / 100}€
+                <div
+                  className={`p-2 rounded ${percentageReturn > 0 ? "bg-green-300" : "bg-red-300"}`}
+                >
+                  {percentageReturn.toFixed(2)}%
+                </div>
+              </div>
+            </Link>
+          );
+        })}
       </Layout>
     </>
   );
