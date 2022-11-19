@@ -19,6 +19,7 @@ const CustomSymbol = ({ size, color, borderWidth, borderColor }) => (
 );
 
 export function Graph({ timeseries }: { timeseries: Timeseries }) {
+  return <></>;
   // Ziel ist https://nivo.rocks/storybook/?path=/docs/line--highlighting-negative-values
   let positive: Dot[] = [];
   let negative: Dot[] = [];
