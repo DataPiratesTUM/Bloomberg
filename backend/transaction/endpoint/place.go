@@ -3,6 +3,7 @@ package endpoint
 import (
 	"database/sql"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -133,6 +134,79 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 	}
 
 	orderSide := body.Side == "buy"
+
+	//TODO: Check if the user has shares to sell
+	sn, snErr := db.Query(
+		`SELECT 
+			SUM(
+				CASE
+				WHEN buyer == $1 THEN quantity
+				ELSE -quantity
+				END
+			) AS count 
+		FROM mtaches m
+		WHERE security = $2
+		GROUP BY security;`,
+		user,
+		body.Security,
+	)
+	if snErr != nil {
+		sendError(c, http.StatusInternalServerError, snErr)
+		return
+	}
+
+	//CHeck if the user has enourgh shares
+	if !sn.Next() {
+		c.Status(http.StatusForbidden)
+		return
+	}
+	var amount int64
+	e := sn.Scan(&amount)
+	if e != nil {
+		sendError(c, http.StatusInternalServerError, e)
+		return
+	}
+
+	if amount < body.Quantity && orderSide {
+		c.Status(http.StatusForbidden)
+		return
+	}
+
+	//TODO: Check if the security is in phase 1 and funding_date is not set. THen calculate current price based on a linear function. Check if funding has been reached
+	rows, err := db.Query(
+		`SELECT s.creation_date, s.ttl_1, s.funding_date, funding_goal FROM securities s WHERE s.id = $1`,
+		body.Security,
+	)
+	if err != nil {
+		sendError(c, http.StatusInternalServerError, err)
+		return
+	}
+	if !rows.Next() {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	var creationDate time.Time
+	var ttl1 int64
+	var funding_date sql.NullTime
+	var funding_goal int64
+	err = rows.Scan(&creationDate, &ttl1, &funding_date, &funding_goal)
+
+	//Security failed if phase 1 is over and funding_date is not set
+	if !funding_date.Valid {
+		if time.Now().After(creationDate.Add(time.Duration(ttl1) * time.Second)) {
+			c.Status(http.StatusBadRequest)
+		} else {
+			diff := time.Now().Sub(creationDate).Seconds()
+
+			m := -funding_goal / (ttl1 / 86400)
+			currentPrice := m*((ttl1-int64(diff))/86400) + funding_goal
+			if currentPrice < 0 {
+				currentPrice = 0
+			}
+
+			//Insert match with null seller
+		}
+	}
 
 	tx, err := db.Begin()
 	if err != nil {

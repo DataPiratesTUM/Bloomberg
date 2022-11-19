@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS orders (
     quantity      BIGINT          NOT NULL CHECK (quantity != 0),
     price         BIGINT          NOT NULL CHECK (price > 0),
     side          BOOLEAN         NOT NULL,
-    "user"        uuid            NOT NULL REFERENCES users (id),
+    "user"        uuid            REFERENCES users (id),
     creation_date TIMESTAMP       NOT NULL DEFAULT now()
 );
 
