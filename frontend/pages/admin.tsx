@@ -15,6 +15,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { queryClient } from "./_app";
+import { Match } from "../components/Match";
 
 export async function getServerSideProps() {
   //  const res = await fetch("localhost:3001/security/all");
@@ -25,13 +26,6 @@ export async function getServerSideProps() {
 
 interface AdminProps {
   securities: string[];
-}
-
-interface Match {
-  created: number;
-  price: number;
-  quantity: number;
-  security: string;
 }
 
 export default function Home({ securities }: AdminProps) {
@@ -53,6 +47,9 @@ export default function Home({ securities }: AdminProps) {
       fetch(`http://localhost:3002/order/place`, {
         method: "POST",
         body: JSON.stringify(order),
+        headers: {
+          "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd",
+        },
       }),
     {
       onSuccess: () => queryClient.invalidateQueries(["matches"]),
@@ -62,8 +59,8 @@ export default function Home({ securities }: AdminProps) {
     const interval = setInterval(() => {
       const order: Order = {
         id: securities[Math.floor(Math.random() * securities.length)],
-        price: varyingPrice(Date.now()) + Math.random() * 0.1,
-        qty: Math.random() * 1000,
+        price: Math.floor((varyingPrice(Date.now()) + Math.random() * 0.1) * 1000),
+        qty: Math.floor(Math.random() * 1000),
         side: Math.random() < 0.5 ? "sell" : "buy",
       };
       simulate && orderMutation.mutate(order);
@@ -125,11 +122,11 @@ export default function Home({ securities }: AdminProps) {
         <br />
         {status === "loading" && <h1>Loading...</h1>}
         {status === "error" && <span>Error: {error.message}</span>}
-        {status === "success" && data && data.map(match => {
-          return (
-            
-          )
-        })}
+        {status === "success" &&
+          data &&
+          data.map((match) => {
+            return <Match key={match.created} match={match} />;
+          })}
       </Layout>
     </>
   );

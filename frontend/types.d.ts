@@ -10,6 +10,13 @@ declare interface Order {
   side: "buy" | "sell";
 }
 
+declare interface Match {
+  created: number;
+  price: number;
+  quantity: number;
+  security: string;
+}
+
 declare interface Security {
   security_id: string;
   price: number;
