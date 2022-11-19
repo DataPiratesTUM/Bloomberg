@@ -14,6 +14,7 @@ func main() {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{"POST", "GET"},
+		AllowHeaders: []string{"*"},
 	}))
 
 	registerRoutes(r, db)
