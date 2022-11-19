@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { Graph } from "../../components/Graph";
 import { Layout } from "../../components/Layout";
+import Setps from "../../components/Steps";
 
 export function getServerSideProps(context: GetServerSidePropsContext) {
   const security_id = context.params?.id;
@@ -110,8 +111,9 @@ export default function Security(props: Securities) {
             <p className="text-xl">{security.description}</p>
             <p className="text-xl">{security.creator.name}</p>
             <p className="text-xl">{timeToNextPhase} until the next phase!</p>
+            <Setps />
           </section>
-          <section className="row-span-2">
+          <section className="row-span-2 p">
             <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
               Orders
             </h2>
