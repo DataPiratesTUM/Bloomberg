@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Line } from "@nivo/line";
 import { Layout } from "../components/Layout";
 
-import React from "react";
+import React, { useState } from "react";
 import { Graph } from "../components/Graph";
 import Link from "next/link";
 import { TrendingList } from "../components/TrendingList";
@@ -98,6 +98,32 @@ interface Home {
 }
 
 export default function Home(props: Home) {
+  const [isSearching, setSearching] = useState(false);
+  const [searchText, setSearchText] = useState("");
+
+  const searchFunc = async (data: string) => {
+    var requestOptions = {
+      method: "GET",
+    };
+
+    const dataReq = await fetch(
+      "http://localhost:3002/security/search?query=" + data,
+      requestOptions
+    )
+      .then((response) => response.text())
+      .then((result) => console.log(result))
+      .catch((error) => console.log("error", error));
+    console.log(dataReq);
+    return dataReq;
+  };
+
+  const inputHandler = (e: any) => {
+    var search = e.target.value;
+    setSearchText(search);
+    searchText.length > 1 ? setSearching(true) : setSearching(false);
+    searchFunc(searchText);
+  };
+
   const { user } = props;
   const { trending } = props;
   const options = {
@@ -120,11 +146,12 @@ export default function Home(props: Home) {
         <meta name="description" content="Research Trading Platform" />
         <link rel="icon" href="/favicon.svg" />
       </Head>
-      <Layout>
+      <Layout inputHandler={inputHandler}>
         <section className="grid grid-rows-[0.5fr_2fr_2fr] grid-cols-2 gap-2">
           <section>
             <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4 basis-3/4">
-              Hello, {user.name}
+              Hello, {user.name}{" "}
+              {isSearching == true ? "Searching" : "Not searching"}
             </h2>
           </section>
 
