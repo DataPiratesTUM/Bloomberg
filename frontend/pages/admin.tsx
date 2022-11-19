@@ -36,15 +36,17 @@ export default function Home({ securities }: AdminProps) {
     (1 / 8) *
       (Math.sin(2) - Math.sin(3 * x) + Math.sin(5 * x) - Math.sin(7 * x) + Math.sin(11 * x));
 
-  const { status, data, error, isFetching } = useQuery(["matches"], async () => {
-    const res = await fetch("http://localhost:3001/order/history/");
+  const { status, data, error, isLoading, isError } = useQuery(["matches"], async () => {
+    const res = await fetch("http://localhost:3001/order/history", {
+      headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
+    });
     const history: Match[] = await res.json();
     return history;
   });
 
   const orderMutation = useMutation(
     (order: Order) =>
-      fetch(`http://localhost:3002/order/place`, {
+      fetch(`http://localhost:3001/order/place`, {
         method: "POST",
         body: JSON.stringify(order),
         headers: {
@@ -58,9 +60,9 @@ export default function Home({ securities }: AdminProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       const order: Order = {
-        id: securities[Math.floor(Math.random() * securities.length)],
+        security: securities[Math.floor(Math.random() * securities.length)],
         price: Math.floor((varyingPrice(Date.now()) + Math.random() * 0.1) * 1000),
-        qty: Math.floor(Math.random() * 1000),
+        quantity: Math.floor(Math.random() * 1000),
         side: Math.random() < 0.5 ? "sell" : "buy",
       };
       simulate && orderMutation.mutate(order);
@@ -120,13 +122,15 @@ export default function Home({ securities }: AdminProps) {
         </button>
         <br />
         <br />
-        {status === "loading" && <h1>Loading...</h1>}
-        {status === "error" && <span>Error: {error.message}</span>}
-        {status === "success" &&
-          data &&
-          data.map((match) => {
-            return <Match key={match.created} match={match} />;
-          })}
+        {isLoading
+          ? "Loading..."
+          : isError
+          ? "Error!"
+          : data
+          ? data.map((match) => {
+              return <Match key={match.created} match={match} />;
+            })
+          : null}
       </Layout>
     </>
   );

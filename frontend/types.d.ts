@@ -4,8 +4,8 @@ declare type Timeseries = {
 }[];
 
 declare interface Order {
-  id: string;
-  qty: number;
+  security: string;
+  quantity: number;
   price: number;
   side: "buy" | "sell";
 }
