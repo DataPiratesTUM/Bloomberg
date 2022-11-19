@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { Graph } from "../../components/Graph";
 import { Layout } from "../../components/Layout";
+import Setps from "../../components/Steps";
 
 export function getServerSideProps(context: GetServerSidePropsContext) {
   const security_id = context.params?.id;
@@ -17,9 +18,12 @@ export function getServerSideProps(context: GetServerSidePropsContext) {
     security_id: "12345",
     creation_date: Date.now() - 100000,
     price: 124,
-    creator: { name: "TUM", organisation_id: "fefwefewf" },
-    description: "This is the description",
-    title: "This is the title",
+    creator: {
+      name: "Technical University Munich",
+      organisation_id: "TUM1234",
+    },
+    description: "Best University in the World",
+    title: "Does the Higgs-Boson exist?",
     orders: [
       {
         id: "edidjw",
@@ -99,59 +103,114 @@ export default function Security(props: Securities) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Layout>
-        <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl pb-4">
-          {security.title} - {security.price / 1000}€
-        </h2>
-        <p className="text-xl">{security.description}</p>
-        <p className="text-xl">{security.creator.name}</p>
-        <p className="text-xl">{timeToNextPhase} until the next phase!</p>
-        <Graph timeseries={security.timeseries} />
-        <input
-          type="number"
-          name="quantity"
-          id="quantity"
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          value={quantity}
-        />{" "}
-        @{" "}
-        <input
-          type="number" // number input ist immer integer, somit keine floats möglich => Textinput benutzen?
-          name="offer"
-          id="offer"
-          onChange={(e) => setOffer(Number(e.target.value))}
-          value={offer}
-        />{" "}
-        = {(quantity * offer) / 100}€
-        <button
-          onClick={() => handleOrder("BUY")}
-          className="text-xl shadow rounded bg-blue-500 text-white px-5 py-2 m-4  "
-        >
-          Place Buy Order
-        </button>
-        <button
-          onClick={() => handleOrder("SELL")}
-          className="text-xl shadow rounded bg-amber-500 text-white px-5 py-2 m-4"
-        >
-          Place Sell Order
-        </button>
-        <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl py-4">Orders</h2>
-        {security.orders
-          .sort((i, j) => j.price - i.price)
-          .map((order) => {
-            return (
-              <section
-                key={order.id}
-                className={`max-w-lg  border shadow rounded my-2 p-4 flex justify-between ${
-                  order.side === "BUY" ? "bg-green-300" : "bg-red-300"
-                }`}
+        <section className="grid grid-rows-[0.5fr_2fr] grid-cols-2 gap-2">
+          <section>
+            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4">
+              {security.title}
+            </h2>
+            <p className="text-xl">{security.description}</p>
+            <p className="text-xl">{security.creator.name}</p>
+            <p className="text-xl">{timeToNextPhase} until the next phase!</p>
+            <Setps />
+          </section>
+          <section className="row-span-2 p">
+            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
+              Orders
+            </h2>
+            {security.orders
+              .sort((i, j) => j.price - i.price)
+              .map((order) => {
+                return (
+                  <section
+                    key={order.id}
+                    className={`max-w-lg  border shadow rounded my-2 p-4 flex justify-between ${
+                      order.side === "BUY" ? "bg-green-300" : "bg-red-300"
+                    }`}
+                  >
+                    <p>
+                      {order.qty} units @ {order.price / 1000}€
+                    </p>
+                  </section>
+                );
+              })}
+          </section>
+          <section>
+            <Graph timeseries={security.timeseries} />
+            <div className="flex">
+              <div className="flex flex-col mr-5">
+                Quantity
+                <input
+                  className="
+            form-control
+            px-3
+            py-1.5
+            text-base
+            font-normal
+            text-gray-700
+            bg-white bg-clip-padding
+            border border-solid border-gray-300
+            rounded
+            transition
+            ease-in-out
+            m-0
+            focus:text-gray-700 focus:bg-white focus:outline-none
+          "
+                  type="number"
+                  name="quantity"
+                  id="quantity"
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  value={quantity}
+                />
+              </div>{" "}
+              <div className="flex flex-col ml-5">
+                Price{" "}
+                <input
+                  className="
+            form-control
+            px-3
+            py-1.5
+            text-base
+            font-normal
+            text-gray-700
+            bg-white bg-clip-padding
+            border border-solid border-gray-300
+            rounded
+            transition
+            ease-in-out
+            m-0
+            focus:text-gray-700 focus:bg-white focus:outline-none
+          "
+                  type="number" // number input ist immer integer, somit keine floats möglich => Textinput benutzen?
+                  name="offer"
+                  id="offer"
+                  onChange={(e) => setOffer(Number(e.target.value))}
+                  value={offer}
+                />
+              </div>{" "}
+              {(quantity * offer) / 100 != 0
+                ? "= " + (quantity * offer) / 100
+                : " "}
+            </div>
+            <div className="flex gap-20 pt-5">
+              <button
+                onClick={() => handleOrder("BUY")}
+                className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
               >
-                <p>
-                  {order.qty} units @ {order.price / 1000}€
-                </p>
-              </section>
-            );
-          })}
-        <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl py-4">Further information</h2>
+                Buy Order
+              </button>
+              <button
+                onClick={() => handleOrder("SELL")}
+                type="button"
+                className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+              >
+                Sell Order
+              </button>
+            </div>
+          </section>
+          <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
+            Further information
+          </h2>
+        </section>
       </Layout>
     </>
   );

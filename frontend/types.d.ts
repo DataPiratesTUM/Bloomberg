@@ -41,3 +41,12 @@ declare interface User {
   }[];
   timeseries: Timeseries;
 }
+
+declare interface TrendingList {
+  trendings: TrendingSec[];
+}
+
+declare interface TrendingSec {
+  security_id: string;
+  title: string;
+}
