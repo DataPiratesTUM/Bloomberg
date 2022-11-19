@@ -18,9 +18,11 @@ import { queryClient } from "./_app";
 import { Match } from "../components/Match";
 
 export async function getServerSideProps() {
-  //  const res = await fetch("localhost:3001/security/all");
-  // let securities: string[] = await res.json();
-  let securities = ["3e8b7701-9d3e-407a-b78a-d8fa4d07bff5"];
+  const res = await fetch("localhost:3002/security/all", {
+    method: "GET",
+    headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
+  });
+  let securities: string[] = await res.json();
   return { props: { securities } };
 }
 
