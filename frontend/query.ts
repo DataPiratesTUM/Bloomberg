@@ -9,7 +9,7 @@ export default function query() {
       url: "localhost:3001/order/history/security/all",
       headers: {},
     };
-    return useQuery(["historyAll"], async (): Promise<Array<any>> => {
+    return useQuery(["matchesAll"], async (): Promise<Array<any>> => {
       const { data } = await axios(config);
       return data;
     });
@@ -37,7 +37,7 @@ export default function query() {
       url: "localhost:3001/order/history/security/",
       headers: {},
     };
-    return useQuery(["portfolio"], async (): Promise<Array<any>> => {
+    return useQuery(["portfolioValue"], async (): Promise<Array<any>> => {
       const { data } = await axios(config);
       return data;
     });
