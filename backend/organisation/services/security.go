@@ -15,7 +15,7 @@ const (
 	GetSecuritySql      string = "SELECT  s.*, p.sell_price, 0 AS qty FROM  securities s LEFT JOIN ( SELECT m.security, m.sell_price FROM matches m WHERE m.id = (SELECT m2.id FROM matches m2 WHERE m2.security = m.security ORDER BY creation_date DESC LIMIT 1) ) AS p ON p.security = s.id WHERE s.id = $1"
 	GetAllSecuritiesSql string = "SELECT  s.*,  p.sell_price, tq.qty FROM  securities s,  (   SELECT    tmp.security,    SUM(tmp.qty) AS qty   FROM (    SELECT      m.security,      (CASE       WHEN buyer = $1 THEN m.quantity      ELSE (-1) * m.quantity     END) AS qty    FROM matches m WHERE buyer = $1 OR seller = $1   ) AS tmp   GROUP BY tmp.security  ) AS tq,  (   SELECT m.security, m.sell_price FROM matches m WHERE m.id = (SELECT m2.id FROM matches m2 WHERE m2.security = m.security ORDER BY creation_date DESC LIMIT 1)  ) AS p WHERE tq.security = s.id AND p.security = s.id"
 	DeleteSecuritySql   string = "DELETE FROM securities WHERE id = $1 AND creator = $2"
-	SearchSecuritySql   string = "SELECT s.id, s.name FROM securities WHERE s.name LIKE %$1%"
+	SearchSecuritySql   string = "SELECT s.id, s.name FROM securities s WHERE s.name LIKE ('%' || $1 || '%') LIMIT 10"
 )
 
 type CreateSecurityReqest struct {
