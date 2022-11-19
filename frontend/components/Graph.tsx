@@ -1,4 +1,5 @@
 import { Line, ResponsiveLine } from "@nivo/line";
+import { format } from "date-fns";
 
 interface Dot {
   x: string;
@@ -7,12 +8,7 @@ interface Dot {
 // @ts-ignore
 const CustomSymbol = ({ size, color, borderWidth, borderColor }) => (
   <g>
-    <circle
-      fill="#fff"
-      r={size / 2}
-      strokeWidth={borderWidth}
-      stroke={borderColor}
-    />
+    <circle fill="#fff" r={size / 2} strokeWidth={borderWidth} stroke={borderColor} />
     <circle
       r={size / 5}
       strokeWidth={borderWidth}
@@ -24,7 +20,6 @@ const CustomSymbol = ({ size, color, borderWidth, borderColor }) => (
 );
 
 export function Graph({ timeseries }: { timeseries: Timeseries }) {
-  return <></>;
   // Ziel ist https://nivo.rocks/storybook/?path=/docs/line--highlighting-negative-values
   let positive: Dot[] = [];
   let negative: Dot[] = [];
@@ -33,30 +28,36 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
   const firstTimestamp = timeseries[0].timestamp;
 
   timeseries.forEach((point, i, series) => {
-    let dot = { x: new Date(point.timestamp).toISOString(), y: point.price };
-    // let nullDot = { ...dot, y: null };
+    const date = format(new Date(point.timestamp), "yyyy-MM-dd:HH");
+    const dot = {
+      x: date,
+      y: point.price,
+    };
+    const nullDot = { ...dot, y: null };
     if (point.price < firstPrice) {
       if (series[i - 1].price > firstPrice) {
         // Wendepunkt
         const previousPoint = series[i - 1];
+        const previousDate = format(new Date(previousPoint.timestamp), "yyyy-MM-dd:HH");
         negative.push({
-          x: new Date(previousPoint.timestamp).toISOString(),
+          x: previousDate,
           y: previousPoint.price,
         });
       }
       // Order of insertion matters
       negative.push(dot);
-      //  positive.push(nullDot);
+      positive.push(nullDot);
 
       if (series[i + 1] && series[i + 1].price >= firstPrice) {
         const nextPoint = series[i + 1];
+        const nextDate = format(new Date(nextPoint.timestamp), "yyyy-MM-dd:HH");
         negative.push({
-          x: new Date(nextPoint.timestamp).toISOString(),
+          x: nextDate,
           y: nextPoint.price,
         });
       }
     } else {
-      //  negative.push(nullDot);
+      negative.push(nullDot);
       positive.push(dot);
     }
   });
@@ -66,8 +67,6 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
     <ResponsiveLine
       margin={{ top: 20, right: 20, bottom: 60, left: 80 }}
       animate={true}
-      width={700}
-      height={400}
       data={[
         {
           id: "positive :)",
@@ -91,9 +90,9 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
       colors={["rgb(97, 205, 187)", "rgb(244, 117, 96)"]}
       xScale={{
         type: "time",
-        format: "%Y-%m-%dT%H:%M:%SZ",
+        format: "%Y-%m-%d:%H",
       }}
-      xFormat="time:%Y-%m-%dT%H:%M:%SZ"
+      xFormat="time:%Y-%m-%d:H"
       yScale={{
         type: "linear",
         stacked: false,
@@ -105,10 +104,11 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
         legendOffset: 12,
       }}
       axisBottom={{
-        display: false,
-        legend: "Time",
+        format: "%b %d, %H:%m:%s",
+        //tickValues: "every 2 days",
+        // tickRotation: -90,
+        legend: "time scale",
         legendOffset: -12,
-        format: "%b %d",
       }}
       pointSymbol={CustomSymbol}
       enableArea={true}
