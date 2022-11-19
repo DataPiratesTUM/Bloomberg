@@ -103,7 +103,7 @@ func parseSecurity(rows *sql.Rows) (Security, error) {
 	var fundingDate sql.NullInt64
 	var price sql.NullInt64
 	var security Security
-	err := rows.Scan(&security.Id, &security.Name, &security.Description, &security.Creator, &creationDate, &security.TtlPhase1, &security.TtlPhase2, &security.FundingGoal, &fundingDate, &price, &security.Quantity)
+	err := rows.Scan(&security.SecurityId, &security.Title, &security.Description, &security.Creator, &creationDate, &security.TtlPhase1, &security.TtlPhase2, &security.FundingAmount, &fundingDate, &price, &security.Quantity)
 	if err != nil {
 		fmt.Println(err)
 		return security, err
