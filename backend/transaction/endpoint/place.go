@@ -43,14 +43,14 @@ func createMatch(tx *sql.Tx, security string, tr *transaction) error {
 	return err
 }
 
-func match(tx *sql.Tx, user string, security string, side bool, price int, quantity int) ([]*transaction, error) {
+func findMatches(tx *sql.Tx, user string, security string, side bool, price int, quantity int) ([]*transaction, error) {
 	transactions := make([]*transaction, 0)
 
 	var rows *sql.Rows
 
 	if side {
 		r, err := tx.Query(
-			`SELECT security, "user", quantity, price FROM "open_orders" WHERE "security" = $1 AND NOT side AND "price" <= $2;`,
+			`SELECT "security", "user", "quantity", "price" FROM "open_orders" WHERE "security" = $1 AND NOT side AND "price" <= $2 AND "quantity" > 0;`,
 			security,
 			price,
 		)
@@ -61,7 +61,7 @@ func match(tx *sql.Tx, user string, security string, side bool, price int, quant
 		rows = r
 	} else {
 		r, err := tx.Query(
-			`SELECT security, "user", quantity, price FROM "open_orders" WHERE "security" = $1 AND side AND "price" >= $2;`,
+			`SELECT "security", "user", "quantity", "price" FROM "open_orders" WHERE "security" = $1 AND side AND "price" >= $2 AND "quantity" > 0;`,
 			security,
 			price,
 		)
@@ -155,7 +155,7 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 	}
 
 	if body.Quantity > 0 {
-		transactions, err := match(tx, user, body.Security, orderSide, body.Price, body.Quantity)
+		transactions, err := findMatches(tx, user, body.Security, orderSide, body.Price, body.Quantity)
 		if err != nil {
 			sendError(c, http.StatusInternalServerError, err)
 			tx.Rollback()

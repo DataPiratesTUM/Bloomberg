@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS matches (
     seller        uuid            NOT NULL REFERENCES users (id),
     sell_price    INT             NOT NULL CHECK (sell_price > 0),
     security      uuid            NOT NULL REFERENCES securities (id),
-    quantity      INT             NOT NULL CHECK (quantity >= 0)
+    quantity      INT             NOT NULL CHECK (quantity >= 0),
+    creation_date DATE            NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS open_orders (
