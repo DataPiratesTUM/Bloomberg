@@ -8,27 +8,26 @@ CREATE TABLE IF NOT EXISTS organisations (
 CREATE TABLE IF NOT EXISTS users (
     id            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
     name          VARCHAR (50)    NOT NULL UNIQUE,
-    balance       INT             NOT NULL DEFAULT 0 CHECK (balance >= 0),
     organisation  uuid            REFERENCES organisations (id)
 );
 
 CREATE TABLE IF NOT EXISTS securities (
     id            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name          VARCHAR (50)    NOT NULL UNIQUE,
+    name          TEXT            NOT NULL UNIQUE,
     description   TEXT            NOT NULL,
-    creator       uuid            NOT NULL REFERENCES users (id),
+    creator       uuid            NOT NULL REFERENCES organisations (id),
     creation_date TIMESTAMP       NOT NULL DEFAULT now(),
-    ttl_1         INT             NOT NULL CHECK (ttl_1 > 0),
-    ttl_2         INT             NOT NULL CHECK (ttl_2 > ttl_1),
-    funding_goal  INT             NOT NULL CHECK (funding_goal > 0),
+    ttl_1         BIGINT          NOT NULL CHECK (ttl_1 > 0),
+    ttl_2         BIGINT          NOT NULL CHECK (ttl_2 > ttl_1),
+    funding_goal  BIGINT          NOT NULL CHECK (funding_goal > 0),
     funding_date  TIMESTAMP       CHECK (funding_date < to_timestamp(ttl_1))
 );
 
 CREATE TABLE IF NOT EXISTS orders (
     id            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
     security      uuid            NOT NULL REFERENCES securities (id),
-    quantity      INT             NOT NULL CHECK (quantity != 0),
-    price         INT             NOT NULL CHECK (price > 0),
+    quantity      BIGINT          NOT NULL CHECK (quantity != 0),
+    price         BIGINT          NOT NULL CHECK (price > 0),
     side          BOOLEAN         NOT NULL,
     "user"        uuid            NOT NULL REFERENCES users (id),
     creation_date TIMESTAMP       NOT NULL DEFAULT now()
@@ -37,18 +36,18 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS matches (
     id            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
     buyer         uuid            NOT NULL REFERENCES users (id),
-    buy_price     INT             NOT NULL CHECK (buy_price > 0),
+    buy_price     BIGINT          NOT NULL CHECK (buy_price > 0),
     seller        uuid            NOT NULL REFERENCES users (id),
-    sell_price    INT             NOT NULL CHECK (sell_price > 0),
+    sell_price    BIGINT          NOT NULL CHECK (sell_price > 0),
     security      uuid            NOT NULL REFERENCES securities (id),
-    quantity      INT             NOT NULL CHECK (quantity >= 0),
+    quantity      BIGINT          NOT NULL CHECK (quantity >= 0),
     creation_date TIMESTAMP       NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS open_orders (
     security      uuid            NOT NULL REFERENCES securities (id),
-    quantity      INT             NOT NULL CHECK (quantity >= 0),
-    price         INT             NOT NULL CHECK (price > 0),
+    quantity      BIGINT          NOT NULL CHECK (quantity >= 0),
+    price         BIGINT          NOT NULL CHECK (price > 0),
     side          BOOLEAN         NOT NULL,
     "user"        uuid            NOT NULL REFERENCES users (id),
 

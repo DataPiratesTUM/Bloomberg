@@ -9,8 +9,8 @@ import (
 )
 
 type match struct {
-	sellPrice    int
-	quantity     int
+	sellPrice    int64
+	quantity     int64
 	security     string
 	creationDate time.Time
 }
@@ -52,7 +52,7 @@ func SecurityHistory(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	var matchesJson []gin.H = make([]gin.H, len(matches))
+	matchesJson := make([]gin.H, len(matches))
 	for i, m := range matches {
 		matchesJson[i] = gin.H{
 			"quantity": m.quantity,
@@ -81,12 +81,12 @@ func OrderHistory(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	var matchesJson []gin.H = make([]gin.H, len(matches))
+	matchesJson := make([]gin.H, len(matches))
 	for i, m := range matches {
 		matchesJson[i] = gin.H{
 			"quantity": m.quantity,
 			"price":    m.sellPrice,
-			"created":  uint64(m.creationDate.Unix()),
+			"created":  m.creationDate.Unix(),
 			"security": m.security,
 		}
 	}
@@ -103,12 +103,12 @@ func AllHistory(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	var matchesJson []gin.H = make([]gin.H, len(matches))
+	matchesJson := make([]gin.H, len(matches))
 	for i, m := range matches {
 		matchesJson[i] = gin.H{
 			"quantity": m.quantity,
 			"price":    m.sellPrice,
-			"created":  uint64(m.creationDate.Unix()),
+			"created":  m.creationDate.Unix(),
 			"security": m.security,
 		}
 	}
