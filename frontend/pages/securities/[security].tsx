@@ -8,14 +8,14 @@ import { Layout } from "../../components/Layout";
 import Setps from "../../components/Steps";
 import Link from "next/link";
 
-export function getServerSideProps(context: GetServerSidePropsContext) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   const security_id = context.params?.id;
 
   // const res = await fetch("");
   //let user: User = await res.json();
 
   // Mock data
-  /* let security: Security = {
+  let security: Security = {
     security_id: "12345",
     creation_date: Date.now() - 100000,
     price: 124,
@@ -68,9 +68,17 @@ export function getServerSideProps(context: GetServerSidePropsContext) {
       { timestamp: 1668821899865, price: 589 },
       { timestamp: 1668821999865, price: 400 },
     ],
-  }; 
+  };
 
-  return { props: { security } };*/
+  /*  let res_security = fetch(
+    "https://organisation.ban.app/security/" + security_id,
+    {}
+  );
+
+  let [json_security] = await Promise.all([res_security]);
+  const security: Security = await json_security.json(); */
+
+  return { props: { security, security_id } };
 }
 
 interface Securities {
@@ -81,24 +89,36 @@ interface Result {
   Name: string;
 }
 
-export default function Security(props: Securities) {
+export default function Security(props: Security) {
   const [quantity, setQuantity] = useState(0);
   const [offer, setOffer] = useState(0);
   const { security } = props;
+  const { security_id } = props;
   const timeToNextPhase = security.funding_date
     ? formatDistanceToNow(security.funding_date + security.ttl_phase_two)
     : formatDistanceToNow(security.creation_date + security.ttl_phase_one);
 
-  function handleOrder(action: string) {
+  async function handleOrder(action: string) {
     const order = {
-      request: "add",
-      security: security.security_id,
-      qty: quantity,
+      security: security_id,
+      quantity: quantity,
       price: offer,
       side: action,
-      user: "user_id_hardcoded",
     };
-    // const result = await fetch("", { method: "POST"})
+    let myHeaders = new Headers();
+    myHeaders.append("X-User-Id", "4e805cc9-fe3b-4649-96fc-f39634a557cd");
+    const config = {
+      method: "POST",
+      headers: myHeaders,
+      body: order,
+      redirect: "follow",
+    };
+    // @ts-ignore
+    const result = await fetch(
+      "https://transaction.ban.app/order/place",
+      // @ts-ignore
+      config
+    );
   }
   return (
     <>
