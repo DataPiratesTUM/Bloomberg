@@ -12,6 +12,18 @@ services:
     depends_on:
       - database
 
+  organisation:
+    build: organisation
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_CONTAINER=database
+      - POSTGRES_DB=database
+    ports:
+      - "3002:8080"
+    depends_on:
+      - database
+
   database:
     image: postgres:latest
     restart: always

@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE IF NOT EXISTS "user" (
+CREATE TABLE IF NOT EXISTS "users" (
     "id"            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
     "name"          VARCHAR (50)    NOT NULL UNIQUE,
     "balance"       INT             NOT NULL DEFAULT 0 CHECK ("balance" >= 0)
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS "order" (
     "quantity"      INT             NOT NULL CHECK ("quantity" > 0),
     "price"         INT             NOT NULL CHECK ("price" > 0),
     "side"          BOOLEAN         NOT NULL,
-    "user"          uuid            NOT NULL REFERENCES "user" ("id"),
+    "users"          uuid            NOT NULL REFERENCES "users" ("id"),
     "creation_date" DATE            NOT NULL DEFAULT now()
 );
 

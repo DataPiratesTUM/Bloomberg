@@ -1,18 +1,23 @@
 package main
 
 import (
-	"bloomberg/organization/services"
+	"bloomberg/organisation/services"
+	"database/sql"
 
 	"github.com/gin-gonic/gin"
 )
 
-func registerRoutes(r *gin.Engine) {
+func registerRoutes(r *gin.Engine, db *sql.DB) {
 	/*
 		Routes to manage users
 	*/
 
-	r.GET("/user/:id", services.GetUser)
-	r.POST("/user/:id/balance") //actions deposit, withdraw
+	r.GET("/user/:id", func(c *gin.Context) {
+		services.GetUser(c, db)
+	})
+	r.POST("/user/:id/balance", func(c *gin.Context) {
+		services.ChangeBalance(c, db)
+	})
 	/*
 		Routes to manage organisations
 	*/
