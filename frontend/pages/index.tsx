@@ -56,14 +56,14 @@ export async function getServerSideProps() {
       },
     ],
     timeseries: [
-      { timestamp: 1668821699865, price: 567 },
-      { timestamp: 1668821799865, price: 670 },
-      { timestamp: 1668821899865, price: 589 },
-      { timestamp: 1668821999865, price: 400 },
-      { timestamp: 1668822099865, price: 567 },
-      { timestamp: 1668822199865, price: 670 },
-      { timestamp: 1668822299865, price: 589 },
-      { timestamp: 1668822399865, price: 400 },
+      { timestamp: Date.now(), price: 567 },
+      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 1, price: 670 },
+      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 2, price: 589 },
+      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 3, price: 400 },
+      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 4, price: 567 },
+      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 5, price: 670 },
+      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 6, price: 589 },
+      { timestamp: Date.now() + 1000 * 60 * 60 * 24 * 7, price: 400 },
     ],
   };
 
@@ -129,12 +129,9 @@ export default function Home(props: Home) {
           </section>
 
           <section className="row-span-2">
-            <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">
-              Your assets
-            </h3>
+            <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">Your assets</h3>
             {user.securities.map((security) => {
-              const percentageReturn =
-                (security.price / security.price_bought - 1) * 100;
+              const percentageReturn = (security.price / security.price_bought - 1) * 100;
               return (
                 <Link
                   href={"/securities/" + security.id}
@@ -157,9 +154,7 @@ export default function Home(props: Home) {
             })}
           </section>
           <section className=" flex flex-col justify-center">
-            <p className="text-xl mb-6">
-              Your futures are worth {user.balance / 100}€ in total
-            </p>
+            <p className="text-xl mb-6">Your futures are worth {user.balance / 100}€ in total</p>
 
             <Graph timeseries={user.timeseries} />
           </section>
