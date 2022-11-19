@@ -14,23 +14,18 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { queryClient } from "./_app";
 import { Match } from "../components/Match";
 
-export async function getServerSideProps() {
-  const res = await fetch("localhost:3002/security/all", {
-    method: "GET",
-    headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
-  });
-  let securities: string[] = await res.json();
-  return { props: { securities } };
-}
+// export async function getServerSideProps() {
+//   const res = await fetch(`http://localhost:3002/security/all`, {
+//     headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
+//   });
+//   const securities = res.json();
+//   return { props: { securities } };
+// }
 
-interface AdminProps {
-  securities: string[];
-}
-
-export default function Home({ securities }: AdminProps) {
+export default function Admin() {
+  const queryClient = useQueryClient();
   const [speed, setSpeed] = useState(1000);
   const [simulate, setSimulate] = useState(false);
   const varyingPrice = (x: number) =>
@@ -38,12 +33,19 @@ export default function Home({ securities }: AdminProps) {
     (1 / 8) *
       (Math.sin(2) - Math.sin(3 * x) + Math.sin(5 * x) - Math.sin(7 * x) + Math.sin(11 * x));
 
-  const { status, data, error, isLoading, isError } = useQuery(["matches"], async () => {
+  const matches = useQuery(["matches"], async () => {
     const res = await fetch("http://localhost:3001/order/history", {
       headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
     });
     const history: Match[] = await res.json();
     return history;
+  });
+  const securities = useQuery(["securities"], async () => {
+    const res = await fetch("http://localhost:3002/security/all", {
+      headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
+    });
+    const s: Security[] = await res.json();
+    return s;
   });
 
   const orderMutation = useMutation(
@@ -56,13 +58,15 @@ export default function Home({ securities }: AdminProps) {
         },
       }),
     {
-      onSuccess: () => queryClient.invalidateQueries(["matches"]),
+      onSuccess: () => queryClient.invalidateQueries(["matches"], {}, { cancelRefetch: false }),
     }
   );
   useEffect(() => {
     const interval = setInterval(() => {
       const order: Order = {
-        security: securities[Math.floor(Math.random() * securities.length)],
+        security: securities.data
+          ? securities.data[Math.floor(Math.random() * securities.data.length)].security_id
+          : "3e8b7701-9d3e-407a-b78a-d8fa4d07bff5",
         price: Math.floor((varyingPrice(Date.now()) + Math.random() * 0.1) * 1000),
         quantity: Math.floor(Math.random() * 1000),
         side: Math.random() < 0.5 ? "sell" : "buy",
@@ -124,12 +128,12 @@ export default function Home({ securities }: AdminProps) {
         </button>
         <br />
         <br />
-        {isLoading
+        {matches.isLoading
           ? "Loading..."
-          : isError
+          : matches.isError
           ? "Error!"
-          : data
-          ? data.map((match) => {
+          : matches.data
+          ? matches.data.map((match) => {
               return <Match key={match.created} match={match} />;
             })
           : null}
