@@ -206,15 +206,10 @@ func DeleteSecurity(c *gin.Context, db *sql.DB) {
 
 func SearchSecurity(c *gin.Context, db *sql.DB) {
 
-	//Parse body
-	var req SecuritySearchRequest
-	if err := c.BindJSON(&req); err != nil {
-		c.Status(http.StatusBadRequest)
-		return
-	}
+	var query = c.Query("query")
 
 	//Query the database for the security or all securities
-	rows, err := db.Query(SearchSecuritySql, req.Query)
+	rows, err := db.Query(SearchSecuritySql, query)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return
