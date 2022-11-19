@@ -6,6 +6,7 @@ import { Layout } from "../components/Layout";
 import React from "react";
 import { Graph } from "../components/Graph";
 import Link from "next/link";
+import { TrendingList } from "../components/TrendingList";
 
 export async function getServerSideProps() {
   // const res = await fetch("");
@@ -17,7 +18,13 @@ export async function getServerSideProps() {
     name: "Cole Friedlaender",
     balance: 12345,
     securities: [
-      { name: "Does the Higgs-Boson exist? ", id: "1234", qty: 4, price: 938, price_bought: 378 },
+      {
+        name: "Does the Higgs-Boson exist? ",
+        id: "1234",
+        qty: 4,
+        price: 938,
+        price_bought: 378,
+      },
       {
         name: "Does sitting during a hackathon for 24 hours cause diabetis?",
         id: "1235",
@@ -34,15 +41,39 @@ export async function getServerSideProps() {
     ],
   };
 
-  return { props: { user } };
+  // Mock data
+  let trending: TrendingList = {
+    trendings: [
+      {
+        security_id: "1",
+        title: "Test1",
+      },
+      {
+        security_id: "2",
+        title: "Test2",
+      },
+      {
+        security_id: "3",
+        title: "Test3",
+      },
+      {
+        security_id: "4",
+        title: "Test4",
+      },
+    ],
+  };
+
+  return { props: { user, trending } };
 }
 
 interface Home {
   user: User;
+  trending: TrendingList;
 }
 
 export default function Home(props: Home) {
   const { user } = props;
+  const { trending } = props;
   const options = {
     responsive: true,
     plugins: {
@@ -64,32 +95,52 @@ export default function Home(props: Home) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Layout>
-        <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl pb-4">Hello, {user.name}</h2>
+        <section className="grid grid-rows-6 grid-cols-2 gap-4">
+          <section>
+            <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl pb-4 basis-3/4">
+              Hello, {user.name}
+            </h2>
+          </section>
 
-        <p className="text-xl">Your futures are worth {user.balance / 100}€ in total</p>
-        <Graph timeseries={user.timeseries} />
-
-        <h2 className="text-4xl font-bold tracking-tight  sm:text-6xl py-4">Your assets</h2>
-        {user.securities.map((security) => {
-          const percentageReturn = (security.price / security.price_bought - 1) * 100;
-          return (
-            <Link
-              href={"/securities/" + security.id}
-              key={security.id}
-              className="max-w-lg  border shadow rounded my-2 p-4 flex justify-between"
-            >
-              <p>{security.name}</p>
-              <div>
-                {(security.qty * security.price) / 100}€
-                <div
-                  className={`p-2 rounded ${percentageReturn > 0 ? "bg-green-300" : "bg-red-300"}`}
+          <section className="place-self-auto row-span-3">
+            <h3 className="text-4xl font-bold tracking-tight  sm:text-4xl">
+              Your assets
+            </h3>
+            {user.securities.map((security) => {
+              const percentageReturn =
+                (security.price / security.price_bought - 1) * 100;
+              return (
+                <Link
+                  href={"/securities/" + security.id}
+                  key={security.id}
+                  className="max-w-lg  border shadow rounded my-2 p-4 flex justify-between"
                 >
-                  {percentageReturn.toFixed(2)}%
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+                  <p>{security.name}</p>
+                  <div>
+                    {(security.qty * security.price) / 100}€
+                    <div
+                      className={`p-2 rounded ${
+                        percentageReturn > 0 ? "bg-green-300" : "bg-red-300"
+                      }`}
+                    >
+                      {percentageReturn.toFixed(2)}%
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </section>
+          <section className="row-span-4">
+            <p className="text-xl">
+              Your futures are worth {user.balance / 100}€ in total
+            </p>
+
+            <Graph timeseries={user.timeseries} />
+          </section>
+          <section className="col-start-1 col-span-2">
+            <TrendingList trendingList={trending} />
+          </section>
+        </section>
       </Layout>
     </>
   );
