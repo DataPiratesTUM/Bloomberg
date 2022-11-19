@@ -35,7 +35,7 @@ func registerRoutes(r *gin.Engine, db *sql.DB) {
 	r.DELETE("/security/:id", func(c *gin.Context) {
 		services.DeleteSecurity(c, db)
 	}) //only possible in the first phase
-	r.GET("/security/search", func(c *gin.Context) {
+	r.GET("/security/search/title", func(c *gin.Context) {
 		services.SearchSecurity(c, db)
 	})
 }

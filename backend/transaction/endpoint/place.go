@@ -135,7 +135,7 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 
 	orderSide := body.Side == "buy"
 
-	//TODO: Check if the user has shares to sell
+	//Check if the user has enourgh shares to sell
 	sn, snErr := db.Query(
 		`SELECT 
 			SUM(
@@ -144,7 +144,7 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 				ELSE -quantity
 				END
 			) AS count 
-		FROM mtaches m
+		FROM matches m
 		WHERE security = $2
 		GROUP BY security;`,
 		user,
@@ -155,7 +155,6 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	//CHeck if the user has enourgh shares
 	if !sn.Next() {
 		c.Status(http.StatusForbidden)
 		return
@@ -172,7 +171,7 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	//TODO: Check if the security is in phase 1 and funding_date is not set. THen calculate current price based on a linear function. Check if funding has been reached
+	//Check if the security is in phase 1 and funding_date is not set. THen calculate current price based on a linear function. Check if funding has been reached
 	rows, err := db.Query(
 		`SELECT s.creation_date, s.ttl_1, s.funding_date, funding_goal FROM securities s WHERE s.id = $1`,
 		body.Security,
@@ -218,10 +217,9 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 				`INSERT INTO "matches" ("security", "buyer", "buy_price", "sell_price", "quantity") VALUES ($1, $2, $3, $4, $5);`,
 				body.Security,
 				user,
-				currentPrice,
+				body.Price,
 				currentPrice,
 				body.Quantity,
-				user,
 			)
 			if err != nil {
 				sendError(c, http.StatusInternalServerError, err)
@@ -229,8 +227,8 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 				return
 			}
 
-			return
 		}
+		return
 	}
 
 	_, err = tx.Exec(
