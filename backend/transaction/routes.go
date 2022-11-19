@@ -19,4 +19,8 @@ func registerRoutes(r *gin.Engine, db *sql.DB) {
 	r.GET("order/history", func(c *gin.Context) {
 		endpoint.OrderHistory(c, db)
 	})
+
+	r.GET("order/history/all", func(c *gin.Context) {
+		endpoint.AllHistory(c, db)
+	})
 }

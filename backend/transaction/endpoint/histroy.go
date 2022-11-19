@@ -15,13 +15,12 @@ type match struct {
 	creationDate time.Time
 }
 
-func securityHistory(db *sql.DB, security string) ([]*match, error) {
+var historySelect = `SELECT "sell_price", "quantity", "security", "creation_date" FROM "matches"`
+
+func history(query func() (*sql.Rows, error)) ([]*match, error) {
 	matches := make([]*match, 0)
 
-	rows, err := db.Query(
-		`SELECT "sell_price", "quantity", "creation_date" FROM "matches" WHERE "security" = $1 ORDER BY "creation_date"`,
-		security,
-	)
+	rows, err := query()
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +28,7 @@ func securityHistory(db *sql.DB, security string) ([]*match, error) {
 
 	for rows.Next() {
 		match := &match{}
-		if err := rows.Scan(&match.sellPrice, &match.quantity, &match.creationDate); err != nil {
+		if err := rows.Scan(&match.sellPrice, &match.quantity, &match.security, &match.creationDate); err != nil {
 			return nil, err
 		}
 
@@ -42,7 +41,12 @@ func securityHistory(db *sql.DB, security string) ([]*match, error) {
 func SecurityHistory(c *gin.Context, db *sql.DB) {
 	security := c.Param("id")
 
-	matches, err := securityHistory(db, security)
+	matches, err := history(func() (*sql.Rows, error) {
+		return db.Query(
+			historySelect+`WHERE "security" = $1 ORDER BY "creation_date"`,
+			security,
+		)
+	})
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
 		return
@@ -60,37 +64,40 @@ func SecurityHistory(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, matchesJson)
 }
 
-func orderHistory(db *sql.DB, user string) ([]*match, error) {
-	matches := make([]*match, 0)
-
-	rows, err := db.Query(
-		`SELECT "sell_price", "quantity", "creation_date", "security" FROM "matches" WHERE "buyer" = $1 OR "seller" = $1 ORDER BY "creation_date"`,
-		user,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		match := &match{}
-		if err := rows.Scan(&match.sellPrice, &match.quantity, &match.creationDate, &match.security); err != nil {
-			return nil, err
-		}
-
-		matches = append(matches, match)
-	}
-
-	return matches, nil
-}
-
 func OrderHistory(c *gin.Context, db *sql.DB) {
 	user, ok := getUser(c)
 	if !ok {
 		return
 	}
 
-	matches, err := orderHistory(db, user)
+	matches, err := history(func() (*sql.Rows, error) {
+		return db.Query(
+			historySelect+`WHERE "buyer" = $1 OR "seller" = $1 ORDER BY "creation_date"`,
+			user,
+		)
+	})
+	if err != nil {
+		sendError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	var matchesJson []gin.H = make([]gin.H, len(matches))
+	for i, m := range matches {
+		matchesJson[i] = gin.H{
+			"quantity": m.quantity,
+			"price":    m.sellPrice,
+			"created":  uint64(m.creationDate.Unix()),
+			"security": m.security,
+		}
+	}
+
+	c.JSON(http.StatusOK, matchesJson)
+}
+
+func AllHistory(c *gin.Context, db *sql.DB) {
+	matches, err := history(func() (*sql.Rows, error) {
+		return db.Query(historySelect + `ORDER BY "creation_date"`)
+	})
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
 		return
