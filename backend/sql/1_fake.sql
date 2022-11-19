@@ -49,8 +49,8 @@ INSERT INTO securities (id, name, creator, description, ttl_1, ttl_2, funding_go
     'LMU',
     '5599931a-6f8e-442d-b52e-8c297af7cb8e',
     'Unexzellent',
-    100,
-    100000000,
+    86400 * 120,
+    86400 * 180,
     1000000000,
     1000000000
 );

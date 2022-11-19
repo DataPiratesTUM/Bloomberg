@@ -101,7 +101,7 @@ func GetSecurityAdapter(c *gin.Context, db *sql.DB) {
 
 func parseSecurity(rows *sql.Rows) (Security, error) {
 	var creationDate time.Time
-	var fundingDate sql.NullInt64
+	var fundingDate sql.NullTime
 	var price sql.NullInt64
 	var security Security
 	err := rows.Scan(&security.SecurityId, &security.Title, &security.Description, &security.Creator, &creationDate, &security.TtlPhase1, &security.TtlPhase2, &security.FundingAmount, &security.FundingRemaining, &fundingDate, &price, &security.Quantity)
@@ -111,7 +111,7 @@ func parseSecurity(rows *sql.Rows) (Security, error) {
 	}
 	security.CreationDate = uint64(creationDate.Unix())
 	if fundingDate.Valid {
-		security.FundingDate = uint64(fundingDate.Int64)
+		security.FundingDate = uint64(fundingDate.Time.Unix())
 	}
 	if price.Valid {
 		security.Price = uint64(price.Int64)
