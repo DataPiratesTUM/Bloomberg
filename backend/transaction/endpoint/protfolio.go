@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var query = `
+var portfolioQuery = `
 WITH security_value AS (
     SELECT
         security,
@@ -46,7 +46,7 @@ func PortfolioValue(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	rows, err := db.Query(query, user)
+	rows, err := db.Query(portfolioQuery, user)
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
 		return

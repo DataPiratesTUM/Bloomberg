@@ -15,6 +15,7 @@ const (
 	GetSecuritySql      string = "SELECT  s.*, p.sell_price, 0 AS qty FROM  securities s LEFT JOIN ( SELECT m.security, m.sell_price FROM matches m WHERE m.id = (SELECT m2.id FROM matches m2 WHERE m2.security = m.security ORDER BY creation_date DESC LIMIT 1) ) AS p ON p.security = s.id WHERE s.id = $1"
 	GetAllSecuritiesSql string = "SELECT  s.*,  p.sell_price, tq.qty FROM  securities s,  (   SELECT    tmp.security,    SUM(tmp.qty) AS qty   FROM (    SELECT      m.security,      (CASE       WHEN buyer = $1 THEN m.quantity      ELSE (-1) * m.quantity     END) AS qty    FROM matches m WHERE buyer = $1 OR seller = $1   ) AS tmp   GROUP BY tmp.security  ) AS tq,  (   SELECT m.security, m.sell_price FROM matches m WHERE m.id = (SELECT m2.id FROM matches m2 WHERE m2.security = m.security ORDER BY creation_date DESC LIMIT 1)  ) AS p WHERE tq.security = s.id AND p.security = s.id"
 	DeleteSecuritySql   string = "DELETE FROM securities WHERE id = $1 AND creator = $2"
+	SearchSecuritySql   string = "SELECT s.id, s.name FROM securities s WHERE s.name LIKE ('%' || $1 || '%') LIMIT 10"
 )
 
 type CreateSecurityReqest struct {
@@ -26,17 +27,26 @@ type CreateSecurityReqest struct {
 }
 
 type Security struct {
-	Id           string `json:"Id"`
-	Name         string `json:"Name" binding:"required"`
-	Description  string `json:"Description" binding:"required"`
-	Creator      string `json:"Creator" binding:"required"`
-	CreationDate uint64 `json:"CreationDate" binding:"required"`
-	TtlPhase1    uint64 `json:"TtlPhase1" binding:"required"`
-	TtlPhase2    uint64 `json:"TtlPhase2" binding:"required"`
-	FundingGoal  uint64 `json:"FundingGoal" binding:"required"`
-	FundingDate  uint64 `json:"FundingDate" binding:"required"`
-	Price        uint64 `json:"Price" binding:"required"`
-	Quantity     uint64 `json:"Quantity"`
+	SecurityId    string `json:"security_id"`
+	Title         string `json:"title" binding:"required"`
+	Description   string `json:"description" binding:"required"`
+	Creator       string `json:"creator" binding:"required"`
+	CreationDate  uint64 `json:"creationDate" binding:"required"`
+	TtlPhase1     uint64 `json:"ttl_phase_one" binding:"required"`
+	TtlPhase2     uint64 `json:"ttl_phase_two" binding:"required"`
+	FundingAmount uint64 `json:"fundingAmount" binding:"required"`
+	FundingDate   uint64 `json:"fundingDate" binding:"required"`
+	Price         uint64 `json:"price" binding:"required"`
+	Quantity      uint64 `json:"quantity"`
+}
+
+type SecuritySearchRequest struct {
+	Query string `json:"Query" binding:"required"`
+}
+
+type RawSecurity struct {
+	Id   string `json:"Id" binding:"required"`
+	Name string `json:"Name" binding:"required"`
 }
 
 func CreateSecurity(c *gin.Context, db *sql.DB) {
@@ -93,7 +103,7 @@ func parseSecurity(rows *sql.Rows) (Security, error) {
 	var fundingDate sql.NullInt64
 	var price sql.NullInt64
 	var security Security
-	err := rows.Scan(&security.Id, &security.Name, &security.Description, &security.Creator, &creationDate, &security.TtlPhase1, &security.TtlPhase2, &security.FundingGoal, &fundingDate, &price, &security.Quantity)
+	err := rows.Scan(&security.SecurityId, &security.Title, &security.Description, &security.Creator, &creationDate, &security.TtlPhase1, &security.TtlPhase2, &security.FundingAmount, &fundingDate, &price, &security.Quantity)
 	if err != nil {
 		fmt.Println(err)
 		return security, err
@@ -192,4 +202,32 @@ func DeleteSecurity(c *gin.Context, db *sql.DB) {
 	}
 
 	c.Status(http.StatusOK)
+}
+
+func SearchSecurity(c *gin.Context, db *sql.DB) {
+
+	var query = c.Query("query")
+
+	//Query the database for the security or all securities
+	rows, err := db.Query(SearchSecuritySql, query)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	//Parse results
+	securities := make([]RawSecurity, 0)
+	for rows.Next() {
+		var id string
+		var name string
+		err := rows.Scan(&id, &name)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		securities = append(securities, RawSecurity{id, name})
+	}
+
+	c.JSON(http.StatusOK, securities)
 }
