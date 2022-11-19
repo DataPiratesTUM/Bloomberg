@@ -189,14 +189,24 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 	var ttl1 int64
 	var funding_date sql.NullTime
 	var funding_goal int64
-	err = rows.Scan(&creationDate, &ttl1, &funding_date, &funding_goal)
+
+	if err = rows.Scan(&creationDate, &ttl1, &funding_date, &funding_goal); err != nil {
+		sendError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		sendError(c, http.StatusInternalServerError, err)
+		return
+	}
 
 	//Security failed if phase 1 is over and funding_date is not set
 	if !funding_date.Valid {
 		if time.Now().After(creationDate.Add(time.Duration(ttl1) * time.Second)) {
 			c.Status(http.StatusBadRequest)
 		} else {
-			diff := time.Now().Sub(creationDate).Seconds()
+			diff := time.Since(creationDate).Seconds()
 
 			m := -funding_goal / (ttl1 / 86400)
 			currentPrice := m*((ttl1-int64(diff))/86400) + funding_goal
@@ -204,14 +214,23 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 				currentPrice = 0
 			}
 
-			//Insert match with null seller
-		}
-	}
+			_, err = tx.Exec(
+				`INSERT INTO "matches" ("security", "buyer", "buy_price", "sell_price", "quantity") VALUES ($1, $2, $3, $4, $5);`,
+				body.Security,
+				user,
+				currentPrice,
+				currentPrice,
+				body.Quantity,
+				user,
+			)
+			if err != nil {
+				sendError(c, http.StatusInternalServerError, err)
+				tx.Rollback()
+				return
+			}
 
-	tx, err := db.Begin()
-	if err != nil {
-		sendError(c, http.StatusInternalServerError, err)
-		return
+			return
+		}
 	}
 
 	_, err = tx.Exec(

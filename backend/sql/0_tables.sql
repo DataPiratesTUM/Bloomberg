@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS orders (
     quantity      BIGINT          NOT NULL CHECK (quantity != 0),
     price         BIGINT          NOT NULL CHECK (price > 0),
     side          BOOLEAN         NOT NULL,
-    "user"        uuid            REFERENCES users (id),
+    "user"        uuid            NOT NULL REFERENCES users (id),
     creation_date TIMESTAMP       NOT NULL DEFAULT now()
 );
 
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS matches (
     id            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
     buyer         uuid            NOT NULL REFERENCES users (id),
     buy_price     BIGINT          NOT NULL CHECK (buy_price > 0),
-    seller        uuid            NOT NULL REFERENCES users (id),
+    seller        uuid            REFERENCES users (id),
     sell_price    BIGINT          NOT NULL CHECK (sell_price > 0),
     security      uuid            NOT NULL REFERENCES securities (id),
     quantity      BIGINT          NOT NULL CHECK (quantity >= 0),
