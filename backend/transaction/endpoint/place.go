@@ -21,82 +21,103 @@ type order struct {
 	price    int
 }
 
-func createMatch(db *sql.DB, buyer string, seller string, buyPrice int, sellPrice int, security string, quantity int) error {
-	_, err := db.Exec(
-		`INSERT INTO matches (buyer, seller, buy_price, sell_price, security, quantity) VALUES ($1, $2, $3, $4, $5, $6);`,
-		buyer,
-		seller,
-		buyPrice,
-		sellPrice,
+type transaction struct {
+	buyer     string
+	seller    string
+	buyPrice  int
+	sellPrice int
+	quantity  int
+}
+
+func createMatch(tx *sql.Tx, security string, tr *transaction) error {
+	_, err := tx.Exec(
+		`INSERT INTO matches ("buyer", "seller", "buy_price", "sell_price", "security", "quantity") VALUES ($1, $2, $3, $4, $5, $6);`,
+		tr.buyer,
+		tr.seller,
+		tr.buyPrice,
+		tr.sellPrice,
 		security,
-		quantity,
+		tr.quantity,
 	)
 
 	return err
 }
 
-func matchBuy(db *sql.DB, user string, security string, price int, quantity int) error {
-	rows, err := db.Query(
-		`SELECT security, "user", quantity, price FROM "open_orders" WHERE "security" = $1 AND NOT side AND "price" <= $2;`,
-		security,
-		price,
-	)
-	if err != nil {
-		return err
-	}
+func match(tx *sql.Tx, user string, security string, side bool, price int, quantity int) ([]*transaction, error) {
+	transactions := make([]*transaction, 0)
 
-	for rows.Next() {
-		var other order
-		err = rows.Scan(&other.security, &other.user, &other.quantity, &other.price)
+	var rows *sql.Rows
+
+	if side {
+		r, err := tx.Query(
+			`SELECT security, "user", quantity, price FROM "open_orders" WHERE "security" = $1 AND NOT side AND "price" <= $2;`,
+			security,
+			price,
+		)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		if other.quantity >= quantity {
-			return createMatch(db, user, other.user, price, other.price, security, quantity)
-		} else {
-			quantity -= other.quantity
-
-			err = createMatch(db, user, other.user, price, other.price, security, other.quantity)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func matchSell(db *sql.DB, user string, security string, price int, quantity int) error {
-	rows, err := db.Query(
-		`SELECT security, "user", quantity, price FROM "open_orders" WHERE "security" = $1 AND side AND "price" >= $2;`,
-		security,
-		price,
-	)
-	if err != nil {
-		return err
-	}
-
-	for rows.Next() {
-		var other order
-		err = rows.Scan(&other.security, &other.user, &other.quantity, &other.price)
+		rows = r
+	} else {
+		r, err := tx.Query(
+			`SELECT security, "user", quantity, price FROM "open_orders" WHERE "security" = $1 AND side AND "price" >= $2;`,
+			security,
+			price,
+		)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		if other.quantity >= quantity {
-			return createMatch(db, other.user, user, other.price, price, security, quantity)
-		} else {
-			quantity -= other.quantity
+		rows = r
+	}
 
-			err = createMatch(db, other.user, user, other.price, price, security, other.quantity)
-			if err != nil {
-				return err
-			}
+	for rows.Next() && quantity > 0 {
+		var other order
+		err := rows.Scan(&other.security, &other.user, &other.quantity, &other.price)
+		if err != nil {
+			return nil, err
+		}
+
+		var transactionQuantity int
+		if other.quantity >= quantity {
+			transactionQuantity = quantity
+		} else {
+			transactionQuantity = other.quantity
+		}
+
+		quantity -= transactionQuantity
+
+		if side {
+			transactions = append(transactions, &transaction{
+				buyer:     user,
+				seller:    other.user,
+				buyPrice:  price,
+				sellPrice: other.price,
+				quantity:  transactionQuantity,
+			})
+		} else {
+			transactions = append(transactions, &transaction{
+				buyer:     other.user,
+				seller:    user,
+				buyPrice:  other.price,
+				sellPrice: price,
+				quantity:  transactionQuantity,
+			})
 		}
 	}
 
-	return nil
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	for _, tr := range transactions {
+		if err := createMatch(tx, security, tr); err != nil {
+			return nil, err
+		}
+	}
+
+	return transactions, nil
 }
 
 func PlaceOrder(c *gin.Context, db *sql.DB) {
@@ -113,7 +134,13 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 
 	orderSide := body.Side == "buy"
 
-	_, err := db.Exec(
+	tx, err := db.Begin()
+	if err != nil {
+		sendError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	_, err = tx.Exec(
 		`INSERT INTO "orders" ("security", "quantity", "price", "side", "user") VALUES ($1, $2, $3, $4, $5);`,
 		body.Security,
 		body.Quantity,
@@ -123,22 +150,39 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 	)
 	if err != nil {
 		sendError(c, http.StatusInternalServerError, err)
+		tx.Rollback()
 		return
 	}
 
-	if orderSide {
-		err = matchBuy(db, user, body.Security, body.Price, body.Quantity)
+	if body.Quantity > 0 {
+		transactions, err := match(tx, user, body.Security, orderSide, body.Price, body.Quantity)
 		if err != nil {
 			sendError(c, http.StatusInternalServerError, err)
+			tx.Rollback()
 			return
 		}
-	} else {
-		err = matchSell(db, user, body.Security, body.Price, body.Quantity)
-		if err != nil {
-			sendError(c, http.StatusInternalServerError, err)
-			return
-		}
-	}
 
-	c.Status(http.StatusOK)
+		err = tx.Commit()
+		if err != nil {
+			sendError(c, http.StatusInternalServerError, err)
+			tx.Rollback()
+			return
+		}
+
+		var transactionJson []gin.H = make([]gin.H, len(transactions))
+		for i, tr := range transactions {
+			transactionJson[i] = gin.H{"quantity": tr.quantity, "price": tr.sellPrice}
+		}
+
+		c.JSON(http.StatusOK, transactionJson)
+	} else {
+		err = tx.Commit()
+		if err != nil {
+			sendError(c, http.StatusInternalServerError, err)
+			tx.Rollback()
+			return
+		}
+
+		c.Status(http.StatusOK)
+	}
 }

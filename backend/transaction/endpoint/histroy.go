@@ -7,7 +7,7 @@ import (
 )
 
 func OrderHistory(c *gin.Context, db *sql.DB) {
-	user, ok := getUser(c)
+	_, ok := getUser(c)
 	if !ok {
 		return
 	}
