@@ -15,7 +15,7 @@ export function getServerSideProps(context: GetServerSidePropsContext) {
   //let user: User = await res.json();
 
   // Mock data
-  let security: Security = {
+  /* let security: Security = {
     security_id: "12345",
     creation_date: Date.now() - 100000,
     price: 124,
@@ -68,9 +68,9 @@ export function getServerSideProps(context: GetServerSidePropsContext) {
       { timestamp: 1668821899865, price: 589 },
       { timestamp: 1668821999865, price: 400 },
     ],
-  };
+  }; 
 
-  return { props: { security } };
+  return { props: { security } };*/
 }
 
 interface Securities {
