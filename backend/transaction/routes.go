@@ -12,12 +12,15 @@ func registerRoutes(r *gin.Engine, db *sql.DB) {
 		endpoint.PlaceOrder(c, db)
 	})
 
-	/*
-		r.GET("order/history", func(c *gin.Context) {
-			endpoint.DeleteOrder(c, db)
-		})
+	r.GET("order/history/security/:id", func(c *gin.Context) {
+		endpoint.SecurityHistory(c, db)
+	})
 
-		r.GET("order/placed", func(c *gin.Context) {
-			endpoint.DeleteOrder(c, db)
-		})*/
+	r.GET("order/history", func(c *gin.Context) {
+		endpoint.OrderHistory(c, db)
+	})
+
+	r.GET("order/history/all", func(c *gin.Context) {
+		endpoint.AllHistory(c, db)
+	})
 }
