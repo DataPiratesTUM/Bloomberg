@@ -1,4 +1,4 @@
-export function SearchBar() {
+/* export function SearchBar() {
   return (
     <div className="flex items-center py-2.5 px-8 text-slate-400 rounded-lg bg-white">
       <svg
@@ -14,6 +14,47 @@ export function SearchBar() {
         ></path>
       </svg>
       Search for theories...
+    </div>
+  );
+}
+ */
+
+import { useState } from "react";
+
+export function SearchBar() {
+  const [searchText, setSearchText] = useState("");
+  let inputHandler = (e: any) => {
+    var search = e.target.value;
+    setSearchText(search);
+    console.log(searchText);
+  };
+  return (
+    <div className="">
+      <div className="w-4/4">
+        <input
+          type="text"
+          className="
+        form-control
+        block
+        w-full
+        px-3
+        py-1.5
+        text-base
+        font-normal
+        text-gray-700
+        bg-white bg-clip-padding
+        border border-solid border-gray-300
+        rounded
+        transition
+        ease-in-out
+        m-0
+        focus:text-gray-700 focus:bg-white focus:outline-none
+      "
+          id="exampleFormControlInput1"
+          placeholder="Search"
+          onChange={inputHandler}
+        />
+      </div>
     </div>
   );
 }
