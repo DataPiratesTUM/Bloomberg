@@ -34,10 +34,11 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS matches (
     id            uuid            PRIMARY KEY DEFAULT uuid_generate_v4(),
     buyer         uuid            NOT NULL REFERENCES users (id),
+    buy_price     INT             NOT NULL CHECK (buy_price > 0),
     seller        uuid            NOT NULL REFERENCES users (id),
+    sell_price    INT             NOT NULL CHECK (sell_price > 0),
     security      uuid            NOT NULL REFERENCES securities (id),
-    quantity      INT             NOT NULL CHECK (quantity >= 0),
-    price         INT             NOT NULL CHECK (price > 0)
+    quantity      INT             NOT NULL CHECK (quantity >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS open_orders (
@@ -50,7 +51,8 @@ CREATE TABLE IF NOT EXISTS open_orders (
     PRIMARY KEY(security, price, side, "user")
 );
 
-CREATE OR REPLACE FUNCTION open_order_trigger_function() 
+
+CREATE OR REPLACE FUNCTION order_trigger_function() 
     RETURNS TRIGGER AS $trigger$
 BEGIN
     IF NEW.quantity < 0 THEN 
@@ -75,57 +77,35 @@ BEGIN
 END; 
 $trigger$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE TRIGGER open_order_trigger
+CREATE OR REPLACE TRIGGER order_trigger
     AFTER INSERT
     ON orders
     FOR EACH ROW
-    EXECUTE PROCEDURE open_order_trigger_function();
+    EXECUTE PROCEDURE order_trigger_function();
 
-CREATE OR REPLACE FUNCTION match_order_trigger_function() 
+CREATE OR REPLACE FUNCTION match_trigger_function() 
     RETURNS TRIGGER AS $trigger$
-    DECLARE 
-        other_price INT;
-        other_user uuid;
-        amount INT;
-        price INT; 
 BEGIN
-    SELECT 
-        o.user, 
-        o.price,
-        LEAST(o.quantity, NEW.quantity),
-        LEAST(o.price, NEW.price) 
-    INTO other_user, other_price, amount, price
-    FROM open_orders AS o
-    WHERE o.side != NEW.side AND o.security = NEW.security
-    ORDER BY abs(o.quantity - NEW.quantity) ASC
-    LIMIT 1;
+UPDATE open_orders
+    SET quantity = quantity - NEW.quantity
+    WHERE side
+        AND "user" = NEW.buyer
+        AND price = NEW.buy_price
+        AND security = NEW.security;
 
-    IF NOT FOUND THEN
-        RETURN NEW;
-    END IF;
-
-    IF NEW.side THEN
-        INSERT INTO matches (buyer, seller, security, quantity, price) VALUES (NEW.user, other_user, NEW.security, amount, price);
-    ELSE
-        INSERT INTO matches (buyer, seller, security, quantity, price) VALUES (other_user, NEW.user, NEW.security, amount, price);
-    END IF;
-
-    UPDATE open_orders AS o
-    SET quantity = o.quantity - amount    
-    WHERE o.security = NEW.security
-        AND o.price = other_price
-        AND o.side != NEW.side
-        AND o.user = other_user;
-
-    NEW.quantity := NEW.quantity - amount;
+    UPDATE open_orders 
+    SET quantity = quantity - NEW.quantity
+    WHERE NOT side
+        AND "user" = NEW.seller
+        AND price = NEW.sell_price
+        AND security = NEW.security;
 
     RETURN NEW;
 END; 
 $trigger$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE TRIGGER open_order_trigger
-    BEFORE INSERT OR UPDATE
-    ON open_orders
+CREATE OR REPLACE TRIGGER match_trigger
+    AFTER INSERT
+    ON matches
     FOR EACH ROW
-    WHEN (pg_trigger_depth() <= 1)
-    EXECUTE PROCEDURE match_order_trigger_function();
+    EXECUTE PROCEDURE match_trigger_function();

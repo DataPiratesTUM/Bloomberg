@@ -1,4 +1,5 @@
 INSERT INTO users (id, name) VALUES ('4e805cc9-fe3b-4649-96fc-f39634a557cd', 'Bob');
+INSERT INTO users (id, name) VALUES ('c85e9879-f808-450d-8ab3-c6f5ab0e9d0c', 'Spongebob');
 
 INSERT INTO organisations (id, name) VALUES ('5599931a-6f8e-442d-b52e-8c297af7cb8e', 'Bob E.V.');
 
