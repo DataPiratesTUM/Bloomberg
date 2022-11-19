@@ -17,11 +17,11 @@ CREATE TABLE IF NOT EXISTS securities (
     name          VARCHAR (50)    NOT NULL UNIQUE,
     description   TEXT            NOT NULL,
     creator       uuid            NOT NULL REFERENCES users (id),
-    creation_date DATE            NOT NULL DEFAULT now(),
+    creation_date TIMESTAMP       NOT NULL DEFAULT now(),
     ttl_1         INT             NOT NULL CHECK (ttl_1 > 0),
     ttl_2         INT             NOT NULL CHECK (ttl_2 > ttl_1),
     funding_goal  INT             NOT NULL CHECK (funding_goal > 0),
-    funding_date  DATE            CHECK (funding_date < to_timestamp(ttl_1))
+    funding_date  TIMESTAMP       CHECK (funding_date < to_timestamp(ttl_1))
 );
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS orders (
     price         INT             NOT NULL CHECK (price > 0),
     side          BOOLEAN         NOT NULL,
     "user"        uuid            NOT NULL REFERENCES users (id),
-    creation_date DATE            NOT NULL DEFAULT now()
+    creation_date TIMESTAMP       NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS matches (
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS matches (
     sell_price    INT             NOT NULL CHECK (sell_price > 0),
     security      uuid            NOT NULL REFERENCES securities (id),
     quantity      INT             NOT NULL CHECK (quantity >= 0),
-    creation_date DATE            NOT NULL DEFAULT now()
+    creation_date TIMESTAMP       NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS open_orders (
@@ -90,7 +90,7 @@ CREATE OR REPLACE TRIGGER order_trigger
 CREATE OR REPLACE FUNCTION match_trigger_function() 
     RETURNS TRIGGER AS $trigger$
 BEGIN
-UPDATE open_orders
+    UPDATE open_orders
     SET quantity = quantity - NEW.quantity
     WHERE side
         AND "user" = NEW.buyer
