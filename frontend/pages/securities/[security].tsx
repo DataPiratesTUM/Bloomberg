@@ -74,7 +74,7 @@ export default function Security(props: Sec) {
   //const security_id = router.asPath;
 
   const showAlertBuy = () => {
-    toast.success("Wow you bought alot of stocks");
+    toast.success("Wow you really believe in this study");
   };
 
   const showAlertSell = () => {
