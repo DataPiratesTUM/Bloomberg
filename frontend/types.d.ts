@@ -8,6 +8,12 @@ declare interface TimeseriesCole {
   price: number;
   quantity: number;
 }
+declare interface OpenOrder {
+  price: number;
+  quantity: number;
+  security: string;
+  side: string;
+}
 
 declare interface Order {
   security: string;

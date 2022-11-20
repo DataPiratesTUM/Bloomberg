@@ -11,7 +11,7 @@ export default function Setps({ fundingSucces }: { fundingSucces: number }) {
             <span
               className={`${
                 test + test1 >= 2
-                  ? "h-6 w-6 rounded-full bg-blue-600 text-center text-[10px] font-bold leading-6 text-white"
+                  ? "h-6 w-6 rounded-full bg-blue text-center text-[10px] font-bold leading-6 text-white"
                   : "h-6 w-6 rounded-full bg-gray-100 text-center text-[10px] font-bold leading-6"
               }  `}
             >
@@ -25,7 +25,7 @@ export default function Setps({ fundingSucces }: { fundingSucces: number }) {
             <span
               className={`${
                 fundingSucces === 1
-                  ? "h-6 w-6 rounded-full bg-blue-600 text-center text-[10px] font-bold leading-6 text-white"
+                  ? "h-6 w-6 rounded-full bg-blue text-center text-[10px] font-bold leading-6 text-white"
                   : "h-6 w-6 rounded-full bg-gray-100 text-center text-[10px] font-bold leading-6"
               }  `}
             >
@@ -39,7 +39,7 @@ export default function Setps({ fundingSucces }: { fundingSucces: number }) {
             <span
               className={`${
                 test + test1 >= 4
-                  ? "h-6 w-6 rounded-full bg-blue-600 text-center text-[10px] font-bold leading-6 text-white"
+                  ? "h-6 w-6 rounded-full bg-blue text-center text-[10px] font-bold leading-6 text-white"
                   : "h-6 w-6 rounded-full bg-gray-100 text-center text-[10px] font-bold leading-6"
               }  `}
             >

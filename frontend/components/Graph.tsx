@@ -81,6 +81,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
     <ResponsiveLine
       margin={{ top: 40, right: 40, bottom: 60, left: 80 }}
       animate={true}
+      height={500}
       data={[
         {
           id: "positive :)",

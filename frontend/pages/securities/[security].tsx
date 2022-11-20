@@ -8,10 +8,11 @@ import { Layout } from "../../components/Layout";
 import Setps from "../../components/Steps";
 import Link from "next/link";
 import toast, { Toaster } from "react-hot-toast";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const id = context.query.security;
-  console.log("ID Site " + id);
+  const idPg = context.query.security;
+  console.log("ID Site " + idPg);
   // Mock data
   /* let security: Security = {
     security_id: "12345",
@@ -33,12 +34,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     headers: myHeaders,
   };
   let res_security = await fetch(
-    "https://organisation.ban.app/security/" + id,
+    "https://organisation.ban.app/security/" + idPg,
     requestOptions
   );
   console.table(res_security);
   const security: Security = await res_security.json();
   console.log(security);
+
+  var headers = new Headers();
 
   /* 
   let res_security_creater = await fetch(
@@ -52,7 +55,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const security_creator: TimeseriesCole[] = await res_security_creater.json(); */
 
   let res_security_history = await fetch(
-    "https://transaction.ban.app/order/history/security/" + id,
+    "https://transaction.ban.app/order/history/security/" + idPg,
     {
       method: "GET",
       redirect: "follow",
@@ -60,25 +63,58 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   );
 
   const security_history: TimeseriesCole[] = await res_security_history.json();
-  return { props: { security_history, security } };
+  return { props: { security, idPg } };
 }
 
 interface Sec {
-  security_history: TimeseriesCole[];
+  // security_history: TimeseriesCole[];
   security: Security;
+  idPg: string;
 }
 
 export default function Security(props: Sec) {
-  const router = useRouter();
-  console.log(router.query);
-  //const security_id = router.asPath;
+  const queryClient = useQueryClient();
 
-  const showAlertBuy = () => {
-    toast.success("Wow you really believe in this study");
+  const orders = useQuery(["orders"], async () => {
+    const res = await fetch(
+      "https://transaction.ban.app/open_orders/" + props.idPg,
+      {
+        headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
+      }
+    );
+    const history: OpenOrder[] = await res.json();
+    return history;
+  });
+  const timeseries = useQuery(["timeseries"], async () => {
+    const res = await fetch(
+      "https://transaction.ban.app/order/history/security/" + props.idPg
+    );
+    const history: TimeseriesCole[] = await res.json();
+    return history;
+  });
+
+  const orderMutation = useMutation(
+    (order: Order) =>
+      fetch(`https://transaction.ban.app/order/place`, {
+        method: "POST",
+        body: JSON.stringify(order),
+        headers: {
+          "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd",
+        },
+      }),
+    {
+      onMutate: () => {
+        queryClient.invalidateQueries(["orders", "timeseries"]);
+      },
+    }
+  );
+
+  const showAlertPlacedOrder = () => {
+    toast.success("Order placed");
   };
 
-  const showAlertSell = () => {
-    toast.success("You are rich");
+  const showAlertDeletedOrder = () => {
+    toast.success("Order deleted");
   };
   const security_history = props.security_history;
   const [quantity, setQuantity] = useState(0);
@@ -88,30 +124,18 @@ export default function Security(props: Sec) {
     ? formatDistanceToNow(security.fundingDate + security.ttl_phase_two)
     : formatDistanceToNow(security.creationDate + security.ttl_phase_one);
 
-  async function handleOrder(action: string) {
+  async function handleOrder(
+    side: "buy" | "sell",
+    action: "ADD" | "DEL" = "ADD"
+  ) {
     const order = {
-      security: "3e8b7701-9d3e-407a-b78a-d8fa4d07bff5",
-      quantity: quantity,
+      security: props.idPg,
+      quantity: quantity * (action === "ADD" ? 1 : -1),
       price: offer,
-      side: action,
+      side,
     };
-    let myHeaders = new Headers();
-    myHeaders.append("X-User-Id", "4e805cc9-fe3b-4649-96fc-f39634a557cd");
-    const config = {
-      method: "POST",
-      headers: myHeaders,
-      body: JSON.stringify(order),
-      redirect: "follow",
-    };
-    console.log(order);
-    // @ts-ignore
-    const result = await fetch(
-      "https://transaction.ban.app/order/place",
-      // @ts-ignore
-      config
-    );
-    console.table(result);
-    action === "sell" ? showAlertSell() : showAlertBuy();
+    orderMutation.mutate(order);
+    action === "DEL" ? showAlertDeletedOrder() : showAlertPlacedOrder();
   }
 
   return (
@@ -127,41 +151,15 @@ export default function Security(props: Sec) {
             <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4">
               {security.title}
             </h2>
-            <p className="text-xl">Study presented by: {security.creator}</p>
-            <p className="text-xl">{security.description}</p>
-
+            <p>Currently trading at {security.price / 1000}€/share</p>
+            {/* <p className="text-xl">Study presented by: {security.creator}</p>
+            <p className="text-xl">{security.description}</p> */}
             <Setps fundingSucces={1} />
           </section>
-          <section className="row-span-2 p">
-            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
-              Orders
+          <section className="row-span-2 plac ">
+            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4">
+              Order Book
             </h2>
-            {security_history
-              .sort((i, j) => j.price - i.price)
-              .map((order) => {
-                return (
-                  <section
-                    key={order.price}
-                    className="max-w-lg  border shadow rounded my-2 p-4 flex justify-between 
-                    bg-blue-600"
-                  >
-                    <p>
-                      {order.quantity} units @ {order.price / 1000}€
-                    </p>
-                  </section>
-                );
-              })}
-          </section>
-
-          <section>
-            <Graph
-              timeseries={security_history
-                .sort((a, b) => b.created - a.created)
-                .map((p) => {
-                  return { timestamp: p.created * 1000, price: p.price };
-                })}
-            />
-            <Toaster />
             <div className="flex">
               <div className="flex flex-col mr-5">
                 Quantity
@@ -217,30 +215,91 @@ export default function Security(props: Sec) {
               </div>{" "}
               <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
                 {(quantity * offer) / 100 != 0
-                  ? " = " + (quantity * offer) / 100
+                  ? " = " + (quantity * offer) / 100 + "€"
                   : " "}
               </h3>
             </div>
-            <div className="flex gap-40 pt-5">
-              <button
-                onClick={() => handleOrder("buy")}
-                className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-              >
-                Buy Order
-              </button>
-              <button
-                onClick={() => handleOrder("sell")}
-                type="button"
-                className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-              >
-                Sell Order
-              </button>
+            <div className="flex gap-5 pt-5">
+              <div className="">
+                <button
+                  onClick={() => handleOrder("buy")}
+                  className="block mb-2 px-6 py-2.5 bg-blue text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                >
+                  Place Buy Order
+                </button>
+                <button
+                  onClick={() => handleOrder("buy", "DEL")}
+                  className="block px-6  mb-2 py-2.5 bg-orange text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-red-700 hover:shadow-lg focus:bg-red-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                >
+                  Delete Buy Order
+                </button>
+              </div>
+              <div>
+                <button
+                  onClick={() => handleOrder("sell")}
+                  type="button"
+                  className="block px-6  mb-2 py-2.5 bg-blue text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                >
+                  Place Sell Order
+                </button>
+
+                <button
+                  onClick={() => handleOrder("sell", "DEL")}
+                  type="button"
+                  className="block px-6 mb-2 py-2.5 bg-orange text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-red-700 hover:shadow-lg focus:bg-red-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                >
+                  Delete Sell Order
+                </button>
+              </div>
             </div>
+            {orders.isLoading
+              ? "Loading..."
+              : orders.isError
+              ? "Error!"
+              : orders.data
+              ? orders.data
+                  .filter((order) => order.quantity > 0)
+                  .sort((i, j) => j.price - i.price)
+                  .map((order) => {
+                    return (
+                      <section
+                        key={order.price}
+                        className={`max-w-lg   border-2 shadow  rounded my-2 p-4 flex justify-between ${
+                          order.side === "sell"
+                            ? "border-orange"
+                            : "border-blue"
+                        }`}
+                      >
+                        <p>
+                          {order.side.toLocaleUpperCase()}: {order.quantity}{" "}
+                          units @ {order.price / 1000}€
+                        </p>
+                      </section>
+                    );
+                  })
+              : null}
           </section>
-          <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
-            Further information
-          </h2>
+          <section>
+            {timeseries.data && (
+              <Graph
+                timeseries={timeseries.data
+                  .sort((a, b) => a.created - b.created)
+                  .map((p) => {
+                    return {
+                      timestamp: p.created * 1000,
+                      price: p.price / 1000,
+                    };
+                  })}
+              />
+            )}
+          </section>
         </section>
+        <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-6">
+          Description
+        </h2>
+        <div className="block row-span-2 px-6 mb-2 py-2.5 bo text-black font-medium text-xs leading-tight  rounded shadow-md  transition duration-150 ease-in-out">
+          <p className="text-xl font-serif">{security.description}</p>
+        </div>
       </Layout>
     </>
   );

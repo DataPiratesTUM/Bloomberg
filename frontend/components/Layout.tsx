@@ -5,6 +5,8 @@ import Logo from "../assets/Logo";
 import Profile from "../assets/Profile";
 import { SearchBar } from "./SearchBar";
 import Router from "next/router";
+import toast, { Toaster } from "react-hot-toast";
+
 interface Result {
   Id: string;
   Name: string;
@@ -84,6 +86,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </header>
 
       <main className="p-8">{isLoadingPage}</main>
+      <Toaster position="top-right" />
     </>
   );
 }
