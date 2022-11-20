@@ -32,10 +32,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     method: "GET",
     headers: myHeaders,
   };
-  let res_security = await fetch(
-    "https://organisation.ban.app/security/" + id,
-    requestOptions
-  );
+  let res_security = await fetch("https://organisation.ban.app/security/" + id, requestOptions);
   console.table(res_security);
   const security: Security = await res_security.json();
   console.log(security);
@@ -133,9 +130,7 @@ export default function Security(props: Sec) {
             <Setps fundingSucces={1} />
           </section>
           <section className="row-span-2 p">
-            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
-              Orders
-            </h2>
+            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">Orders</h2>
             {security_history
               .sort((i, j) => j.price - i.price)
               .map((order) => {
@@ -158,7 +153,7 @@ export default function Security(props: Sec) {
               timeseries={security_history
                 .sort((a, b) => b.created - a.created)
                 .map((p) => {
-                  return { timestamp: p.created * 1000, price: p.price };
+                  return { timestamp: p.created * 1000, price: p.price / 1000 };
                 })}
             />
             <Toaster />
@@ -216,9 +211,7 @@ export default function Security(props: Sec) {
                 />
               </div>{" "}
               <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
-                {(quantity * offer) / 100 != 0
-                  ? " = " + (quantity * offer) / 100
-                  : " "}
+                {(quantity * offer) / 100 != 0 ? " = " + (quantity * offer) / 100 : " "}
               </h3>
             </div>
             <div className="flex gap-40 pt-5">

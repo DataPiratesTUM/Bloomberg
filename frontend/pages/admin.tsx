@@ -34,11 +34,11 @@ export default function Admin({ securities }: Admin) {
   const [simulate, setSimulate] = useState(false);
   const varyingPrice = (x: number) =>
     0.35 +
-    (1 / 8) *
+    (1 / 10) *
       (Math.sin(2) - Math.sin(3 * x) + Math.sin(5 * x) - Math.sin(7 * x) + Math.sin(11 * x));
 
   const matches = useQuery(["matches"], async () => {
-    const res = await fetch("http://https://transaction.ban.app/order/history", {
+    const res = await fetch("https://transaction.ban.app/order/history", {
       headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
     });
     const history: Match[] = await res.json();
@@ -47,7 +47,7 @@ export default function Admin({ securities }: Admin) {
 
   const orderMutation = useMutation(
     (order: Order) =>
-      fetch(`http://https://transaction.ban.app/order/place`, {
+      fetch(`https://transaction.ban.app/order/place`, {
         method: "POST",
         body: JSON.stringify(order),
         headers: {
@@ -64,7 +64,7 @@ export default function Admin({ securities }: Admin) {
         // securities.data
         security: securities[Math.floor(Math.random() * securities.length)].Id,
 
-        price: Math.floor((varyingPrice(Date.now()) + Math.random() * 0.1) * 1000),
+        price: Math.floor((varyingPrice(Date.now()) + Math.random() * 0.01) * 1000) + 500,
         quantity: Math.floor(Math.random() * 10),
         side: Math.random() < 0.5 ? "sell" : "buy",
       };
