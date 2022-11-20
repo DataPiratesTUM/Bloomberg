@@ -42,7 +42,6 @@ export default function Admin({ securities }: Admin) {
       headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
     });
     const history: Match[] = await res.json();
-    console.log(history);
     return history;
   });
 
@@ -66,9 +65,10 @@ export default function Admin({ securities }: Admin) {
         security: securities[Math.floor(Math.random() * securities.length)].Id,
 
         price: Math.floor((varyingPrice(Date.now()) + Math.random() * 0.1) * 1000),
-        quantity: Math.floor(Math.random() * 1000),
+        quantity: Math.floor(Math.random() * 10),
         side: Math.random() < 0.5 ? "sell" : "buy",
       };
+      console.log(order.price, order.quantity, order.security);
       simulate && orderMutation.mutate(order);
     }, speed);
     return () => clearInterval(interval);
