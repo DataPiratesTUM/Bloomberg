@@ -8,12 +8,7 @@ interface Dot {
 // @ts-ignore
 const CustomSymbol = ({ size, color, borderWidth, borderColor }) => (
   <g>
-    <circle
-      fill="#fff"
-      r={size / 2}
-      strokeWidth={borderWidth}
-      stroke={borderColor}
-    />
+    <circle fill="#fff" r={size / 2} strokeWidth={borderWidth} stroke={borderColor} />
     <circle
       r={size / 5}
       strokeWidth={borderWidth}
@@ -28,6 +23,14 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
   if (timeseries.length === 0) {
     return <></>;
   }
+
+  timeseries.reduce<Timeseries>((acc, cur) => {
+    console.log(acc, cur);
+    if (acc[acc.length - 1] && acc[acc.length - 1].timestamp !== cur.timestamp) {
+      acc.push(cur);
+    }
+    return acc;
+  }, []);
   // Ziel ist https://nivo.rocks/storybook/?path=/docs/line--highlighting-negative-values
   let positive: Dot[] = [];
   let negative: Dot[] = [];
@@ -46,10 +49,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
       if (series[i - 1].price > firstPrice) {
         // Wendepunkt
         const previousPoint = series[i - 1];
-        const previousDate = format(
-          new Date(previousPoint.timestamp),
-          "yyyy-MM-dd:HH:mm:ss"
-        );
+        const previousDate = format(new Date(previousPoint.timestamp), "yyyy-MM-dd:HH:mm:ss");
         negative.push({
           x: previousDate,
           y: previousPoint.price,
@@ -61,10 +61,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
 
       if (series[i + 1] && series[i + 1].price >= firstPrice) {
         const nextPoint = series[i + 1];
-        const nextDate = format(
-          new Date(nextPoint.timestamp),
-          "yyyy-MM-dd:HH:mm:ss"
-        );
+        const nextDate = format(new Date(nextPoint.timestamp), "yyyy-MM-dd:HH:mm:ss");
         negative.push({
           x: nextDate,
           y: nextPoint.price,
@@ -106,6 +103,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
       xScale={{
         type: "time",
         format: "%Y-%m-%d:%H:%M:%S",
+        nice: true,
       }}
       xFormat="time:%Y-%m-%d:H"
       yScale={{
@@ -113,6 +111,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
         stacked: false,
         min: 0,
         max: "auto",
+        nice: true,
       }}
       axisLeft={{
         legend: "Portfolio value in €",

@@ -8,6 +8,7 @@ import { Graph } from "../components/Graph";
 import Link from "next/link";
 import { TrendingList } from "../components/TrendingList";
 import query from "../query";
+import { useEffect } from "react";
 
 export async function getServerSideProps() {
   let res_user = fetch(
@@ -27,17 +28,8 @@ export async function getServerSideProps() {
 
   let res_user_trending = fetch("https://transaction.ban.app/trending");
 
-  let [
-    json_user,
-    json_user_securities,
-    json_user_portfolio,
-    json_user_trending,
-  ] = await Promise.all([
-    res_user,
-    res_user_securities,
-    res_user_portfolio,
-    res_user_trending,
-  ]);
+  let [json_user, json_user_securities, json_user_portfolio, json_user_trending] =
+    await Promise.all([res_user, res_user_securities, res_user_portfolio, res_user_trending]);
   const user: User = await json_user.json();
   const securities: Security[] = await json_user_securities.json();
   const portfolio: Portfolio[] = await json_user_portfolio.json();
@@ -54,6 +46,12 @@ interface Home {
 }
 
 export default function Home({ user, securities, portfolio, trending }: Home) {
+  const [portfolioValue, setPortfolioValue] = useState(0);
+
+  useEffect(() => {
+    setPortfolioValue(portfolio.length === 0 ? 0 : portfolio[portfolio.length - 1].value / 1000);
+  }, [portfolio]);
+
   console.log(securities, user, trending, portfolio);
   return (
     <>
@@ -71,13 +69,8 @@ export default function Home({ user, securities, portfolio, trending }: Home) {
           </section>
 
           <section className="row-span-2">
-            <h3 className="text-4xl font-bold tracking-tight mb-8 sm:text-5xl">
-              Your assets
-            </h3>
-            <p className="text-xl mb-6">
-              Your securities are worth{" "}
-              {portfolio[portfolio.length - 1].value / 1000}€ in total
-            </p>
+            <h3 className="text-4xl font-bold tracking-tight mb-8 sm:text-5xl">Your assets</h3>
+            <div className="text-xl mb-6">Your securities are worth {portfolioValue}€ in total</div>
             {securities.map((security) => {
               // const percentageReturn = (security.price / security.price_bought - 1) * 100;
               return (
@@ -88,12 +81,10 @@ export default function Home({ user, securities, portfolio, trending }: Home) {
                 >
                   <div>
                     <h3 className="text-xl">{security.title}</h3>
-                    <p className="text-gray-600 ">
-                      {security.description.slice(0, 100) + "..."}
-                    </p>
+                    <p className="text-gray-600 ">{security.description.slice(0, 100) + "..."}</p>
                   </div>
                   <div className="flex justify-center items-center text-xl ">
-                    {(security.quantity * security.price) / 1000}€
+                    {((security.quantity * security.price) / 1000).toFixed(2)}€
                     {/* <div
                       className={`p-2 rounded ml-5 ${
                         percentageReturn > 0 ? "bg-green-300" : "bg-red-300"
@@ -111,7 +102,7 @@ export default function Home({ user, securities, portfolio, trending }: Home) {
               timeseries={portfolio
                 .sort((a, b) => b.time - a.time)
                 .map((p) => {
-                  return { timestamp: p.time * 1000, price: p.value };
+                  return { timestamp: p.time * 1000, price: p.value / 1000 };
                 })}
             />
           </section>

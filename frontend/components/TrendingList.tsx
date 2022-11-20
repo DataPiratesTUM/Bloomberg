@@ -3,18 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 
 export function TrendingList() {
   const query = useQuery(["securities"], async () => {
-    const res = await fetch(
-      "https://organisation.ban.app/security/search/title/?query="
-    );
+    const res = await fetch("https://organisation.ban.app/security/search/title?query=");
     const securities: SecurityOverview[] = await res.json();
     return securities;
   });
 
   return (
     <div className=" p-0.5 rounded  place-self-center">
-      <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">
-        Trending
-      </h3>
+      <h3 className="text-4xl font-bold tracking-tight mb-8  sm:text-5xl">Trending</h3>
       {query.isLoading
         ? "Loading..."
         : query.isError
