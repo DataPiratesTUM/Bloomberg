@@ -19,15 +19,13 @@
 }
  */
 
-import { useState } from "react";
+import { ChangeEventHandler, useState } from "react";
 
-export function SearchBar() {
-  const [searchText, setSearchText] = useState("");
-  let inputHandler = (e: any) => {
-    var search = e.target.value;
-    setSearchText(search);
-    console.log(searchText);
-  };
+export function SearchBar({
+  inputHandler,
+}: {
+  inputHandler: ChangeEventHandler;
+}) {
   return (
     <div className="">
       <div className="w-4/4">

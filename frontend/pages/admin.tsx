@@ -38,7 +38,7 @@ export default function Admin({ securities }: Admin) {
       (Math.sin(2) - Math.sin(3 * x) + Math.sin(5 * x) - Math.sin(7 * x) + Math.sin(11 * x));
 
   const matches = useQuery(["matches"], async () => {
-    const res = await fetch("http://localhost:3001/order/history", {
+    const res = await fetch("http://https://transaction.ban.app/order/history", {
       headers: { "X-User-Id": "4e805cc9-fe3b-4649-96fc-f39634a557cd" },
     });
     const history: Match[] = await res.json();
@@ -47,7 +47,7 @@ export default function Admin({ securities }: Admin) {
 
   const orderMutation = useMutation(
     (order: Order) =>
-      fetch(`http://localhost:3001/order/place`, {
+      fetch(`http://https://transaction.ban.app/order/place`, {
         method: "POST",
         body: JSON.stringify(order),
         headers: {

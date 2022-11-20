@@ -6,7 +6,7 @@ export default function query() {
   const getHistoryAll = () => {
     const config = {
       method: "get",
-      url: "localhost:3001/order/history/security/all",
+      url: "https://transaction.ban.app/order/history/security/all",
       headers: {},
     };
     return useQuery(["matchesAll"], async (): Promise<Array<any>> => {
@@ -19,7 +19,7 @@ export default function query() {
   const getUserHistory = ({ userId }: { userId: string }) => {
     const config = {
       method: "get",
-      url: "localhost:3001/order/value",
+      url: "https://transaction.ban.app/order/value",
       headers: {
         "X-User-Id": userId,
       },
@@ -34,7 +34,7 @@ export default function query() {
   function getPorfolioValue() {
     const config = {
       method: "get",
-      url: "localhost:3001/order/history/security/",
+      url: "https://transaction.ban.app/order/history/security/",
       headers: {},
     };
     return useQuery(["portfolioValue"], async (): Promise<Array<any>> => {
@@ -48,7 +48,7 @@ export default function query() {
     const data = { order };
     const config = {
       method: "post",
-      url: "localhost:3001/order/place",
+      url: "https://transaction.ban.app/order/place",
       headers: {
         "X-User-Id": userId,
       },
@@ -65,7 +65,7 @@ export default function query() {
     const data = { order };
     const config = {
       method: "post",
-      url: "localhost:3001/order/sell",
+      url: "https://transaction.ban.app/order/sell",
       headers: {
         "X-User-Id": userId,
       },

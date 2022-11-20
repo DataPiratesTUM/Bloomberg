@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Line } from "@nivo/line";
 import { Layout } from "../components/Layout";
 
-import React from "react";
+import React, { useState } from "react";
 import { Graph } from "../components/Graph";
 import Link from "next/link";
 import { TrendingList } from "../components/TrendingList";
@@ -104,7 +104,7 @@ export default function Home({ user, securities, portfolio, trending }: Home) {
             />
           </section>
           <section className="col-start-1 col-span-2">
-            <TrendingList trending={trending} />
+            <TrendingList />
           </section>
         </section>
       </Layout>

@@ -6,95 +6,114 @@ import { useState } from "react";
 import { Graph } from "../../components/Graph";
 import { Layout } from "../../components/Layout";
 import Setps from "../../components/Steps";
+import Link from "next/link";
+import toast, { Toaster } from "react-hot-toast";
 
-export function getServerSideProps(context: GetServerSidePropsContext) {
-  const security_id = context.params?.id;
-
-  // const res = await fetch("");
-  //let user: User = await res.json();
-
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const id = context.query.security;
+  console.log("ID Site " + id);
   // Mock data
-  let security: Security = {
+  /* let security: Security = {
     security_id: "12345",
-    creation_date: Date.now() - 100000,
+    creationDate: Date.now() - 100000,
     price: 124,
-    creator: {
-      name: "Technical University Munich",
-      organisation_id: "TUM1234",
-    },
+    creator: "TUM",
     description: "Best University in the World",
-    title: "Does the Higgs-Boson exist?",
-    orders: [
-      {
-        id: "edidjw",
-        price: 234,
-        qty: 3,
-        side: "SELL",
-      },
-      {
-        id: "edifjw",
-        price: 23,
-        qty: 245,
-        side: "SELL",
-      },
-      {
-        id: "edrdjw",
-        price: 235,
-        qty: 5,
-        side: "SELL",
-      },
-      {
-        id: "edidjt",
-        price: 700,
-        qty: 245,
-        side: "BUY",
-      },
-      {
-        id: "ed3djw",
-        price: 236,
-        qty: 245,
-        side: "BUY",
-      },
-    ],
+    title: "Global value numbers and redundant computations?",
     ttl_phase_one: Date.now() + 10000,
     ttl_phase_two: 1000 * 60 * 60 * 24 * 31 * 6,
-    funding_amount: 125_000,
-    funding_date: null,
-
-    timeseries: [
-      { timestamp: 1668821699865, price: 567 },
-      { timestamp: 1668821799865, price: 670 },
-      { timestamp: 1668821899865, price: 589 },
-      { timestamp: 1668821999865, price: 400 },
-    ],
+    fundingAmount: 125_000,
+    fundingDate: null,
+    quantity: 3,
+  }; */
+  var myHeaders = new Headers();
+  myHeaders.append("X-User-Id", "4e805cc9-fe3b-4649-96fc-f39634a557cd");
+  var requestOptions = {
+    method: "GET",
+    headers: myHeaders,
   };
+  let res_security = await fetch(
+    "https://organisation.ban.app/security/" + id,
+    requestOptions
+  );
+  console.table(res_security);
+  const security: Security = await res_security.json();
+  console.log(security);
 
-  return { props: { security } };
+  /* 
+  let res_security_creater = await fetch(
+    "https://transaction.ban.app/organisation/" + security.creator,
+    {
+      method: "GET",
+      redirect: "follow",
+    }
+  );
+
+  const security_creator: TimeseriesCole[] = await res_security_creater.json(); */
+
+  let res_security_history = await fetch(
+    "https://transaction.ban.app/order/history/security/" + id,
+    {
+      method: "GET",
+      redirect: "follow",
+    }
+  );
+
+  const security_history: TimeseriesCole[] = await res_security_history.json();
+  return { props: { security_history, security } };
 }
 
-interface Securities {
+interface Sec {
+  security_history: TimeseriesCole[];
   security: Security;
 }
 
-export default function Security(props: Securities) {
+export default function Security(props: Sec) {
+  const router = useRouter();
+  console.log(router.query);
+  //const security_id = router.asPath;
+
+  const showAlertBuy = () => {
+    toast.success("Wow you really believe in this study");
+  };
+
+  const showAlertSell = () => {
+    toast.success("You are rich");
+  };
+  const security_history = props.security_history;
   const [quantity, setQuantity] = useState(0);
   const [offer, setOffer] = useState(0);
-  const { security } = props;
-  const timeToNextPhase = security.funding_date
-    ? formatDistanceToNow(security.funding_date + security.ttl_phase_two)
-    : formatDistanceToNow(security.creation_date + security.ttl_phase_one);
+  const security = props.security;
+  const timeToNextPhase = security.fundingDate
+    ? formatDistanceToNow(security.fundingDate + security.ttl_phase_two)
+    : formatDistanceToNow(security.creationDate + security.ttl_phase_one);
 
-  function handleOrder(action: string) {
+  async function handleOrder(action: string) {
     const order = {
-      request: "add",
-      security: security.security_id,
-      qty: quantity,
+      security: "3e8b7701-9d3e-407a-b78a-d8fa4d07bff5",
+      quantity: quantity,
       price: offer,
       side: action,
-      user: "user_id_hardcoded",
     };
-    // const result = await fetch("", { method: "POST"})
+    let myHeaders = new Headers();
+    myHeaders.append("X-User-Id", "4e805cc9-fe3b-4649-96fc-f39634a557cd");
+    const config = {
+      method: "POST",
+      headers: myHeaders,
+      body: JSON.stringify(order),
+      redirect: "follow",
+    };
+    console.log(order);
+    // @ts-ignore
+    const result = await fetch(
+      "https://transaction.ban.app/order/place",
+      // @ts-ignore
+      config
+    );
+    console.table(result);
+    action === "sell" ? showAlertSell() : showAlertBuy();
   }
+
   return (
     <>
       <Head>
@@ -108,36 +127,46 @@ export default function Security(props: Securities) {
             <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4">
               {security.title}
             </h2>
+            <p className="text-xl">Study presented by: {security.creator}</p>
             <p className="text-xl">{security.description}</p>
-            <p className="text-xl">{security.creator}</p>
-            <p className="text-xl">{timeToNextPhase} until the next phase!</p>
-            <Setps />
+
+            <Setps fundingSucces={1} />
           </section>
           <section className="row-span-2 p">
-            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">Orders</h2>
-            {security.orders
+            <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
+              Orders
+            </h2>
+            {security_history
               .sort((i, j) => j.price - i.price)
               .map((order) => {
                 return (
                   <section
-                    key={order.id}
-                    className={`max-w-lg  border shadow rounded my-2 p-4 flex justify-between ${
-                      order.side === "BUY" ? "bg-green-300" : "bg-red-300"
-                    }`}
+                    key={order.price}
+                    className="max-w-lg  border shadow rounded my-2 p-4 flex justify-between 
+                    bg-blue-600"
                   >
                     <p>
-                      {order.qty} units @ {order.price / 1000}€
+                      {order.quantity} units @ {order.price / 1000}€
                     </p>
                   </section>
                 );
               })}
           </section>
+
           <section>
-            <Graph timeseries={security.timeseries} />
+            <Graph
+              timeseries={security_history
+                .sort((a, b) => b.created - a.created)
+                .map((p) => {
+                  return { timestamp: p.created * 1000, price: p.price };
+                })}
+            />
+            <Toaster />
             <div className="flex">
               <div className="flex flex-col mr-5">
                 Quantity
                 <input
+                  min="0"
                   className="
             form-control
             px-3
@@ -163,6 +192,7 @@ export default function Security(props: Securities) {
               <div className="flex flex-col ml-5">
                 Price{" "}
                 <input
+                  min="0"
                   className="
             form-control
             px-3
@@ -185,17 +215,21 @@ export default function Security(props: Securities) {
                   value={offer}
                 />
               </div>{" "}
-              {(quantity * offer) / 100 != 0 ? "= " + (quantity * offer) / 100 : " "}
+              <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
+                {(quantity * offer) / 100 != 0
+                  ? " = " + (quantity * offer) / 100
+                  : " "}
+              </h3>
             </div>
-            <div className="flex gap-20 pt-5">
+            <div className="flex gap-40 pt-5">
               <button
-                onClick={() => handleOrder("BUY")}
+                onClick={() => handleOrder("buy")}
                 className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
               >
                 Buy Order
               </button>
               <button
-                onClick={() => handleOrder("SELL")}
+                onClick={() => handleOrder("sell")}
                 type="button"
                 className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
               >
