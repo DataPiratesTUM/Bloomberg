@@ -64,7 +64,9 @@ export default function Home({ user, securities, portfolio, trending }: Home) {
           <section className="row-span-2">
             <h3 className="text-4xl font-bold tracking-tight mb-8 sm:text-5xl">Your assets</h3>
             <p className="text-xl mb-6">
-              Your securities are worth {portfolio[portfolio.length - 1].value / 1000}€ in total
+              Your securities are worth{" "}
+              {portfolio.length === 0 ? "0€" : portfolio[portfolio.length - 1].value / 1000}€ in
+              total
             </p>
             {securities.map((security) => {
               // const percentageReturn = (security.price / security.price_bought - 1) * 100;
