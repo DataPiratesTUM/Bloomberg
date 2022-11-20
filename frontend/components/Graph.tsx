@@ -8,7 +8,12 @@ interface Dot {
 // @ts-ignore
 const CustomSymbol = ({ size, color, borderWidth, borderColor }) => (
   <g>
-    <circle fill="#fff" r={size / 2} strokeWidth={borderWidth} stroke={borderColor} />
+    <circle
+      fill="#fff"
+      r={size / 2}
+      strokeWidth={borderWidth}
+      stroke={borderColor}
+    />
     <circle
       r={size / 5}
       strokeWidth={borderWidth}
@@ -20,6 +25,9 @@ const CustomSymbol = ({ size, color, borderWidth, borderColor }) => (
 );
 
 export function Graph({ timeseries }: { timeseries: Timeseries }) {
+  if (timeseries.length === 0) {
+    return <></>;
+  }
   // Ziel ist https://nivo.rocks/storybook/?path=/docs/line--highlighting-negative-values
   let positive: Dot[] = [];
   let negative: Dot[] = [];
@@ -38,7 +46,10 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
       if (series[i - 1].price > firstPrice) {
         // Wendepunkt
         const previousPoint = series[i - 1];
-        const previousDate = format(new Date(previousPoint.timestamp), "yyyy-MM-dd:HH");
+        const previousDate = format(
+          new Date(previousPoint.timestamp),
+          "yyyy-MM-dd:HH"
+        );
         negative.push({
           x: previousDate,
           y: previousPoint.price,

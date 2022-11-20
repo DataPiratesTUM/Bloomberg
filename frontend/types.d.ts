@@ -3,6 +3,12 @@ declare type Timeseries = {
   price: number;
 }[];
 
+declare interface TimeseriesCole {
+  created: number;
+  price: number;
+  quantity: number;
+}
+
 declare interface Order {
   security: string;
   quantity: number;

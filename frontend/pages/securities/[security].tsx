@@ -9,65 +9,22 @@ import Setps from "../../components/Steps";
 import Link from "next/link";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const security_id = context.params?.id;
-
   // const res = await fetch("");
   //let user: User = await res.json();
 
   // Mock data
   let security: Security = {
     security_id: "12345",
-    creation_date: Date.now() - 100000,
+    creationDate: Date.now() - 100000,
     price: 124,
-    creator: {
-      name: "Technical University Munich",
-      organisation_id: "TUM1234",
-    },
+    creator: "TUM",
     description: "Best University in the World",
     title: "Does the Higgs-Boson exist?",
-    orders: [
-      {
-        id: "edidjw",
-        price: 234,
-        qty: 3,
-        side: "SELL",
-      },
-      {
-        id: "edifjw",
-        price: 23,
-        qty: 245,
-        side: "SELL",
-      },
-      {
-        id: "edrdjw",
-        price: 235,
-        qty: 5,
-        side: "SELL",
-      },
-      {
-        id: "edidjt",
-        price: 700,
-        qty: 245,
-        side: "BUY",
-      },
-      {
-        id: "ed3djw",
-        price: 236,
-        qty: 245,
-        side: "BUY",
-      },
-    ],
     ttl_phase_one: Date.now() + 10000,
     ttl_phase_two: 1000 * 60 * 60 * 24 * 31 * 6,
-    funding_amount: 125_000,
-    funding_date: null,
-
-    timeseries: [
-      { timestamp: 1668821699865, price: 567 },
-      { timestamp: 1668821799865, price: 670 },
-      { timestamp: 1668821899865, price: 589 },
-      { timestamp: 1668821999865, price: 400 },
-    ],
+    fundingAmount: 125_000,
+    fundingDate: null,
+    quantity: 3,
   };
 
   /*  let res_security = fetch(
@@ -78,29 +35,40 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   let [json_security] = await Promise.all([res_security]);
   const security: Security = await json_security.json(); */
 
-  return { props: { security, security_id } };
+  let res_security_history = await fetch(
+    "https://transaction.ban.app/order/history/security/" +
+      "3e8b7701-9d3e-407a-b78a-d8fa4d07bff5",
+    {
+      method: "GET",
+      redirect: "follow",
+    }
+  );
+
+  const security_history: TimeseriesCole[] = await res_security_history.json();
+  return { props: { security_history, security } };
 }
 
-interface Securities {
+interface Sec {
+  security_history: TimeseriesCole[];
   security: Security;
 }
-interface Result {
-  Id: string;
-  Name: string;
-}
 
-export default function Security(props: Security) {
+export default function Security(props: Sec) {
+  const router = useRouter();
+  console.log(router.query);
+  //const security_id = router.asPath;
+
+  const security_history = props.security_history;
   const [quantity, setQuantity] = useState(0);
   const [offer, setOffer] = useState(0);
-  const { security } = props;
-  const { security_id } = props;
-  const timeToNextPhase = security.funding_date
-    ? formatDistanceToNow(security.funding_date + security.ttl_phase_two)
-    : formatDistanceToNow(security.creation_date + security.ttl_phase_one);
+  const security = props.security;
+  const timeToNextPhase = security.fundingDate
+    ? formatDistanceToNow(security.fundingDate + security.ttl_phase_two)
+    : formatDistanceToNow(security.creationDate + security.ttl_phase_one);
 
   async function handleOrder(action: string) {
     const order = {
-      security: security_id,
+      security: "3e8b7701-9d3e-407a-b78a-d8fa4d07bff5",
       quantity: quantity,
       price: offer,
       side: action,
@@ -110,16 +78,19 @@ export default function Security(props: Security) {
     const config = {
       method: "POST",
       headers: myHeaders,
-      body: order,
+      body: JSON.stringify(order),
       redirect: "follow",
     };
+    console.log(order);
     // @ts-ignore
     const result = await fetch(
       "https://transaction.ban.app/order/place",
       // @ts-ignore
       config
     );
+    console.table(result);
   }
+
   return (
     <>
       <Head>
@@ -142,7 +113,7 @@ export default function Security(props: Security) {
             <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
               Orders
             </h2>
-            {security.orders
+            {/*  {security.orders
               .sort((i, j) => j.price - i.price)
               .map((order) => {
                 return (
@@ -157,10 +128,16 @@ export default function Security(props: Security) {
                     </p>
                   </section>
                 );
-              })}
+              })} */}
           </section>
           <section>
-            <Graph timeseries={security.timeseries} />
+            <Graph
+              timeseries={security_history
+                .sort((a, b) => b.created - a.created)
+                .map((p) => {
+                  return { timestamp: p.created * 1000, price: p.price };
+                })}
+            />
             <div className="flex">
               <div className="flex flex-col mr-5">
                 Quantity
@@ -218,13 +195,13 @@ export default function Security(props: Security) {
             </div>
             <div className="flex gap-20 pt-5">
               <button
-                onClick={() => handleOrder("BUY")}
+                onClick={() => handleOrder("buy")}
                 className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
               >
                 Buy Order
               </button>
               <button
-                onClick={() => handleOrder("SELL")}
+                onClick={() => handleOrder("sell")}
                 type="button"
                 className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
               >
