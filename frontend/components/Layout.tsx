@@ -4,6 +4,7 @@ import React, { ChangeEventHandler, ReactNode, useState } from "react";
 import Logo from "../assets/Logo";
 import Profile from "../assets/Profile";
 import { SearchBar } from "./SearchBar";
+import Router from "next/router";
 interface Result {
   Id: string;
   Name: string;
@@ -17,14 +18,15 @@ export function Layout({ children }: { children: ReactNode }) {
       method: "GET",
     };
 
-    const dataReq = await fetch(
-      "http://localhost:3002/security/search/title?query=" + data,
+    let dataReq = await fetch(
+      "http://organisation.ban.app/security/search/title?query=" + data,
       requestOptions
-    )
-      .then((response) => response.json())
-      .then((result) => setResponse(result))
-      .catch((error) => console.log("error", error));
-    return dataReq;
+    );
+
+    console.log(dataReq.body);
+    const resultCole: Result[] = await dataReq.json();
+    setResponse(resultCole);
+    return resultCole;
   };
 
   const inputHandler = (e: any) => {
@@ -33,7 +35,6 @@ export function Layout({ children }: { children: ReactNode }) {
     search.length >= 1 ? setSearching(true) : setSearching(false);
     searchFunc(search);
   };
-  console.log("RESPONSE COOOOLEEE" + response);
 
   const pageSearching = (
     <div>
@@ -48,7 +49,11 @@ export function Layout({ children }: { children: ReactNode }) {
           </h2>
           {response!.map((result) => {
             return (
-              <Link href={"/securities/" + result.Id} key={result.Id}>
+              <Link
+                href={"/securities/" + result.Id}
+                key={result.Id}
+                passHref={true}
+              >
                 <div className=" m-2 border shadow rounded my-2 p-4 flex justify-between">
                   <p>{result.Name}</p>
                 </div>

@@ -7,6 +7,7 @@ import { Graph } from "../../components/Graph";
 import { Layout } from "../../components/Layout";
 import Setps from "../../components/Steps";
 import Link from "next/link";
+import toast, { Toaster } from "react-hot-toast";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const id = context.query.security;
@@ -72,6 +73,13 @@ export default function Security(props: Sec) {
   console.log(router.query);
   //const security_id = router.asPath;
 
+  const showAlertBuy = () => {
+    toast.success("Wow you bought alot of stocks");
+  };
+
+  const showAlertSell = () => {
+    toast.success("You are rich");
+  };
   const security_history = props.security_history;
   const [quantity, setQuantity] = useState(0);
   const [offer, setOffer] = useState(0);
@@ -103,6 +111,7 @@ export default function Security(props: Sec) {
       config
     );
     console.table(result);
+    action === "sell" ? showAlertSell() : showAlertBuy();
   }
 
   return (
@@ -127,23 +136,23 @@ export default function Security(props: Sec) {
             <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
               Orders
             </h2>
-            {/*  {security.orders
+            {security_history
               .sort((i, j) => j.price - i.price)
               .map((order) => {
                 return (
                   <section
-                    key={order.id}
-                    className={`max-w-lg  border shadow rounded my-2 p-4 flex justify-between ${
-                      order.side === "BUY" ? "bg-green-300" : "bg-red-300"
-                    }`}
+                    key={order.price}
+                    className="max-w-lg  border shadow rounded my-2 p-4 flex justify-between 
+                      bg-green-300"
                   >
                     <p>
-                      {order.qty} units @ {order.price / 1000}€
+                      {order.quantity} units @ {order.price / 1000}€
                     </p>
                   </section>
                 );
-              })} */}
+              })}
           </section>
+
           <section>
             <Graph
               timeseries={security_history
@@ -152,6 +161,7 @@ export default function Security(props: Sec) {
                   return { timestamp: p.created * 1000, price: p.price };
                 })}
             />
+            <Toaster />
             <div className="flex">
               <div className="flex flex-col mr-5">
                 Quantity
