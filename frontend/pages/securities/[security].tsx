@@ -9,35 +9,49 @@ import Setps from "../../components/Steps";
 import Link from "next/link";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  // const res = await fetch("");
-  //let user: User = await res.json();
-
+  const id = context.query.security;
+  console.log("ID Site " + id);
   // Mock data
-  let security: Security = {
+  /* let security: Security = {
     security_id: "12345",
     creationDate: Date.now() - 100000,
     price: 124,
     creator: "TUM",
     description: "Best University in the World",
-    title: "Does the Higgs-Boson exist?",
+    title: "Global value numbers and redundant computations?",
     ttl_phase_one: Date.now() + 10000,
     ttl_phase_two: 1000 * 60 * 60 * 24 * 31 * 6,
     fundingAmount: 125_000,
     fundingDate: null,
     quantity: 3,
+  }; */
+  var myHeaders = new Headers();
+  myHeaders.append("X-User-Id", "4e805cc9-fe3b-4649-96fc-f39634a557cd");
+  var requestOptions = {
+    method: "GET",
+    headers: myHeaders,
   };
+  let res_security = await fetch(
+    "https://organisation.ban.app/security/" + id,
+    requestOptions
+  );
+  console.table(res_security);
+  const security: Security = await res_security.json();
+  console.log(security);
 
-  /*  let res_security = fetch(
-    "https://organisation.ban.app/security/" + security_id,
-    {}
+  /* 
+  let res_security_creater = await fetch(
+    "https://transaction.ban.app/organisation/" + security.creator,
+    {
+      method: "GET",
+      redirect: "follow",
+    }
   );
 
-  let [json_security] = await Promise.all([res_security]);
-  const security: Security = await json_security.json(); */
+  const security_creator: TimeseriesCole[] = await res_security_creater.json(); */
 
   let res_security_history = await fetch(
-    "https://transaction.ban.app/order/history/security/" +
-      "3e8b7701-9d3e-407a-b78a-d8fa4d07bff5",
+    "https://transaction.ban.app/order/history/security/" + id,
     {
       method: "GET",
       redirect: "follow",
@@ -104,10 +118,10 @@ export default function Security(props: Sec) {
             <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4">
               {security.title}
             </h2>
+            <p className="text-xl">Study presented by: {security.creator}</p>
             <p className="text-xl">{security.description}</p>
-            <p className="text-xl">{security.creator}</p>
-            <p className="text-xl">{timeToNextPhase} until the next phase!</p>
-            <Setps />
+
+            <Setps fundingSucces={1} />
           </section>
           <section className="row-span-2 p">
             <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
@@ -142,6 +156,7 @@ export default function Security(props: Sec) {
               <div className="flex flex-col mr-5">
                 Quantity
                 <input
+                  min="0"
                   className="
             form-control
             px-3
@@ -167,6 +182,7 @@ export default function Security(props: Sec) {
               <div className="flex flex-col ml-5">
                 Price{" "}
                 <input
+                  min="0"
                   className="
             form-control
             px-3
@@ -189,11 +205,13 @@ export default function Security(props: Sec) {
                   value={offer}
                 />
               </div>{" "}
-              {(quantity * offer) / 100 != 0
-                ? "= " + (quantity * offer) / 100
-                : " "}
+              <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl py-4">
+                {(quantity * offer) / 100 != 0
+                  ? " = " + (quantity * offer) / 100
+                  : " "}
+              </h3>
             </div>
-            <div className="flex gap-20 pt-5">
+            <div className="flex gap-40 pt-5">
               <button
                 onClick={() => handleOrder("buy")}
                 className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"

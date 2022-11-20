@@ -46,14 +46,10 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
       if (series[i - 1].price > firstPrice) {
         // Wendepunkt
         const previousPoint = series[i - 1];
-<<<<<<< HEAD
         const previousDate = format(
           new Date(previousPoint.timestamp),
-          "yyyy-MM-dd:HH"
+          "yyyy-MM-dd:HH:mm:ss"
         );
-=======
-        const previousDate = format(new Date(previousPoint.timestamp), "yyyy-MM-dd:HH:mm:ss");
->>>>>>> origin/index
         negative.push({
           x: previousDate,
           y: previousPoint.price,
@@ -65,7 +61,10 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
 
       if (series[i + 1] && series[i + 1].price >= firstPrice) {
         const nextPoint = series[i + 1];
-        const nextDate = format(new Date(nextPoint.timestamp), "yyyy-MM-dd:HH:mm:ss");
+        const nextDate = format(
+          new Date(nextPoint.timestamp),
+          "yyyy-MM-dd:HH:mm:ss"
+        );
         negative.push({
           x: nextDate,
           y: nextPoint.price,

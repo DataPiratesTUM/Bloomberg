@@ -116,7 +116,7 @@ export default function Home({ user, securities, portfolio, trending }: Home) {
             />
           </section>
           <section className="col-start-1 col-span-2">
-            <TrendingList trending={trending} />
+            <TrendingList />
           </section>
         </section>
       </Layout>

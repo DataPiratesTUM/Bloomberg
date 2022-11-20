@@ -1,4 +1,4 @@
-export default function Setps() {
+export default function Setps({ fundingSucces }: { fundingSucces: number }) {
   let test = 1;
   let test1 = 1;
   return (
@@ -24,7 +24,7 @@ export default function Setps() {
           <li className="flex items-center bg-white p-2">
             <span
               className={`${
-                test + test1 >= 3
+                fundingSucces === 1
                   ? "h-6 w-6 rounded-full bg-blue-600 text-center text-[10px] font-bold leading-6 text-white"
                   : "h-6 w-6 rounded-full bg-gray-100 text-center text-[10px] font-bold leading-6"
               }  `}

@@ -33,11 +33,12 @@ export function Layout({ children }: { children: ReactNode }) {
     search.length >= 1 ? setSearching(true) : setSearching(false);
     searchFunc(search);
   };
+  console.log("RESPONSE COOOOLEEE" + response);
 
   const pageSearching = (
     <div>
       {response?.length === 0 || response == null ? (
-        <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4 basis-3/4">
+        <h2 className="text-4xl font-bold tracking-tight  sm:text-5xl pb-4 basis-3/4 text-center m-20">
           NOTHING FOUND
         </h2>
       ) : (
