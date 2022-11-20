@@ -33,14 +33,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     method: "GET",
     headers: myHeaders,
   };
-<<<<<<< HEAD
   let res_security = await fetch(
     "https://organisation.ban.app/security/" + idPg,
     requestOptions
   );
-=======
-  let res_security = await fetch("https://organisation.ban.app/security/" + id, requestOptions);
->>>>>>> origin/index
   console.table(res_security);
   const security: Security = await res_security.json();
   console.log(security);

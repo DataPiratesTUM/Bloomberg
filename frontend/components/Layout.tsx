@@ -50,7 +50,14 @@ export function Layout({ children }: { children: ReactNode }) {
           </h2>
           {response!.map((result) => {
             return (
-              <Link href={"/securities/" + result.Id} key={result.Id} passHref={true}>
+              <Link
+                href={{
+                  pathname: "/securities/[security]",
+                  query: { security: result.Id },
+                }}
+                key={result.Id}
+                onClick={() => setSearching(false)}
+              >
                 <div className=" m-2 border shadow rounded my-2 p-4 flex justify-between">
                   <p>{result.Name}</p>
                 </div>
