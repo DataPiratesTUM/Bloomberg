@@ -73,6 +73,7 @@ func findMatches(tx *sql.Tx, user string, security string, side bool, price int6
 
 		rows = r
 	}
+	defer rows.Close()
 
 	for rows.Next() && quantity > 0 {
 		var other order
@@ -109,10 +110,6 @@ func findMatches(tx *sql.Tx, user string, security string, side bool, price int6
 		}
 	}
 
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-
 	for _, tr := range transactions {
 		if err := createMatch(tx, security, tr); err != nil {
 			return nil, err
@@ -131,12 +128,6 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 	var body body
 	if err := c.BindJSON(&body); err != nil {
 		sendError(c, http.StatusBadRequest, err)
-		return
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		sendError(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -162,6 +153,7 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 			sendError(c, http.StatusInternalServerError, snErr)
 			return
 		}
+		defer sn.Close()
 
 		if !sn.Next() {
 			c.Status(http.StatusForbidden)
@@ -180,6 +172,12 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 		}
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		sendError(c, http.StatusInternalServerError, err)
+		return
+	}
+
 	//Check if the security is in phase 1 and funding_date is not set. THen calculate current price based on a linear function. Check if funding has been reached
 	if orderSide {
 		rows, err := db.Query(
@@ -188,10 +186,13 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 		)
 		if err != nil {
 			sendError(c, http.StatusInternalServerError, err)
+			tx.Rollback()
 			return
 		}
+		defer rows.Close()
 		if !rows.Next() {
 			c.Status(http.StatusNotFound)
+			tx.Rollback()
 			return
 		}
 		var creationDate time.Time
@@ -202,6 +203,7 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 
 		if err = rows.Scan(&creationDate, &ttl1, &funding_date, &funding_goal, &funding_remaining); err != nil {
 			sendError(c, http.StatusInternalServerError, err)
+			tx.Rollback()
 			return
 		}
 
@@ -209,55 +211,60 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 		if !funding_date.Valid {
 			if time.Now().After(creationDate.Add(time.Duration(ttl1) * time.Second)) {
 				c.Status(http.StatusBadRequest)
+				tx.Rollback()
 				return
 			} else {
 				diff := time.Since(creationDate).Seconds()
 
-				m := -funding_goal / (ttl1 / 86400)
-				currentPrice := m*((ttl1-int64(diff))/86400) + funding_goal
+				m := (-1000) / (ttl1 / 86400)
+				currentPrice := m*((ttl1-int64(diff))/86400) + (1000)
 				if currentPrice < 0 {
 					currentPrice = 0
 				}
 
-				var tmp int64
-				fullyFunded := false
-				if funding_remaining-body.Quantity*currentPrice < currentPrice {
-					tmp = body.Quantity - funding_remaining/currentPrice
-					body.Quantity = funding_remaining / currentPrice
-					fullyFunded = true
-				}
-				fmt.Println(body.Quantity)
+				//If the price is to high dont buy
+				if currentPrice < body.Price {
 
-				//Insert a match without a seller to indicate initial shares
-				_, err = tx.Exec(
-					`INSERT INTO "matches" ("security", "buyer", "buy_price", "sell_price", "quantity") VALUES ($1, $2, $3, $4, $5);`,
-					body.Security,
-					user,
-					body.Price,
-					currentPrice,
-					body.Quantity,
-				)
+					var tmp int64
+					fullyFunded := false
+					if funding_remaining-body.Quantity*currentPrice < currentPrice {
+						tmp = body.Quantity - funding_remaining/currentPrice
+						body.Quantity = funding_remaining / currentPrice
+						fullyFunded = true
+					}
+					fmt.Println(body.Quantity)
 
-				if err != nil {
-					sendError(c, http.StatusInternalServerError, err)
-					tx.Rollback()
-					return
-				}
-
-				//Check if phase 1 should be ended
-				if fullyFunded {
+					//Insert a match without a seller to indicate initial shares
 					_, err = tx.Exec(
-						`UPDATE securities SET funding_date = $1 WHERE id = $2`,
-						time.Now(),
+						`INSERT INTO "matches" ("security", "buyer", "buy_price", "sell_price", "quantity") VALUES ($1, $2, $3, $4, $5);`,
 						body.Security,
+						user,
+						body.Price,
+						currentPrice,
+						body.Quantity,
 					)
+
 					if err != nil {
 						sendError(c, http.StatusInternalServerError, err)
+						tx.Rollback()
+						return
 					}
-				}
 
-				if tmp > 0 {
-					body.Quantity = tmp
+					//Check if phase 1 should be ended
+					if fullyFunded {
+						_, err = tx.Exec(
+							`UPDATE securities SET funding_date = $1 WHERE id = $2`,
+							time.Now(),
+							body.Security,
+						)
+						if err != nil {
+							sendError(c, http.StatusInternalServerError, err)
+						}
+					}
+
+					if tmp > 0 {
+						body.Quantity = tmp
+					}
 				}
 
 			}
