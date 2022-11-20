@@ -25,7 +25,6 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
   }
 
   timeseries.reduce<Timeseries>((acc, cur) => {
-    console.log(acc, cur);
     if (acc[acc.length - 1] && acc[acc.length - 1].timestamp !== cur.timestamp) {
       acc.push(cur);
     }
@@ -73,7 +72,6 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
     }
   });
 
-  console.log(positive, negative);
   return (
     <ResponsiveLine
       margin={{ top: 40, right: 40, bottom: 60, left: 80 }}
