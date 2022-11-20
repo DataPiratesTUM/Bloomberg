@@ -62,7 +62,10 @@ export default function Home({ user, securities, portfolio, trending }: Home) {
           </section>
 
           <section className="row-span-2">
-            <h3 className="text-4xl font-bold tracking-tight  sm:text-5xl">Your assets</h3>
+            <h3 className="text-4xl font-bold tracking-tight mb-8 sm:text-5xl">Your assets</h3>
+            <p className="text-xl mb-6">
+              Your securities are worth {portfolio[portfolio.length - 1].value / 1000}€ in total
+            </p>
             {securities.map((security) => {
               // const percentageReturn = (security.price / security.price_bought - 1) * 100;
               return (
@@ -71,9 +74,11 @@ export default function Home({ user, securities, portfolio, trending }: Home) {
                   key={security.security_id}
                   className="  border shadow rounded my-2 p-4 flex justify-between items-center"
                 >
-                  <h3>{security.title}</h3>
-                  <p>{security.description}</p>
-                  <div className="flex justify-center items-center ">
+                  <div>
+                    <h3 className="text-xl">{security.title}</h3>
+                    <p className="text-gray-600 ">{security.description.slice(0, 100) + "..."}</p>
+                  </div>
+                  <div className="flex justify-center items-center text-xl ">
                     {(security.quantity * security.price) / 1000}€
                     {/* <div
                       className={`p-2 rounded ml-5 ${
@@ -88,14 +93,12 @@ export default function Home({ user, securities, portfolio, trending }: Home) {
             })}
           </section>
           <section className=" flex flex-col justify-center">
-            <p className="text-xl mb-6">
-              Your securities are worth {portfolio[portfolio.length - 1].value / 1000}€ in total
-            </p>
-
             <Graph
-              timeseries={portfolio.map((p) => {
-                return { timestamp: p.time, price: p.value };
-              })}
+              timeseries={portfolio
+                .sort((a, b) => b.time - a.time)
+                .map((p) => {
+                  return { timestamp: p.time * 1000, price: p.value };
+                })}
             />
           </section>
           <section className="col-start-1 col-span-2">

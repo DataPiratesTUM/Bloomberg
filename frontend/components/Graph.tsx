@@ -28,7 +28,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
   const firstTimestamp = timeseries[0].timestamp;
 
   timeseries.forEach((point, i, series) => {
-    const date = format(new Date(point.timestamp), "yyyy-MM-dd:HH");
+    const date = format(new Date(point.timestamp), "yyyy-MM-dd:HH:mm:ss");
     const dot = {
       x: date,
       y: point.price,
@@ -38,7 +38,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
       if (series[i - 1].price > firstPrice) {
         // Wendepunkt
         const previousPoint = series[i - 1];
-        const previousDate = format(new Date(previousPoint.timestamp), "yyyy-MM-dd:HH");
+        const previousDate = format(new Date(previousPoint.timestamp), "yyyy-MM-dd:HH:mm:ss");
         negative.push({
           x: previousDate,
           y: previousPoint.price,
@@ -50,7 +50,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
 
       if (series[i + 1] && series[i + 1].price >= firstPrice) {
         const nextPoint = series[i + 1];
-        const nextDate = format(new Date(nextPoint.timestamp), "yyyy-MM-dd:HH");
+        const nextDate = format(new Date(nextPoint.timestamp), "yyyy-MM-dd:HH:mm:ss");
         negative.push({
           x: nextDate,
           y: nextPoint.price,
@@ -67,7 +67,6 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
     <ResponsiveLine
       margin={{ top: 40, right: 40, bottom: 60, left: 80 }}
       animate={true}
-      height={400}
       data={[
         {
           id: "positive :)",
@@ -91,7 +90,7 @@ export function Graph({ timeseries }: { timeseries: Timeseries }) {
       colors={["rgb(97, 205, 187)", "rgb(244, 117, 96)"]}
       xScale={{
         type: "time",
-        format: "%Y-%m-%d:%H",
+        format: "%Y-%m-%d:%H:%M:%S",
       }}
       xFormat="time:%Y-%m-%d:H"
       yScale={{
