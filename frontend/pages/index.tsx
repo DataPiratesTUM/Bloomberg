@@ -34,7 +34,6 @@ export async function getServerSideProps() {
   const securities: Security[] = await json_user_securities.json();
   const portfolio: Portfolio[] = await json_user_portfolio.json();
   const trending: Trending = await json_user_trending.json();
-  console.log(securities);
   return { props: { user, trending, securities, portfolio } };
 }
 
@@ -52,7 +51,6 @@ export default function Home({ user, securities, portfolio, trending }: Home) {
     setPortfolioValue(portfolio.length === 0 ? 0 : portfolio[portfolio.length - 1].value / 1000);
   }, [portfolio]);
 
-  console.log(securities, user, trending, portfolio);
   return (
     <>
       <Head>

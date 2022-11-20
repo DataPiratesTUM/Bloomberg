@@ -25,7 +25,6 @@ export function Layout({ children }: { children: ReactNode }) {
       requestOptions
     );
 
-    console.log(dataReq.body);
     const resultCole: Result[] = await dataReq.json();
     setResponse(resultCole);
     return resultCole;
@@ -51,11 +50,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </h2>
           {response!.map((result) => {
             return (
-              <Link
-                href={"/securities/" + result.Id}
-                key={result.Id}
-                passHref={true}
-              >
+              <Link href={"/securities/" + result.Id} key={result.Id} passHref={true}>
                 <div className=" m-2 border shadow rounded my-2 p-4 flex justify-between">
                   <p>{result.Name}</p>
                 </div>
