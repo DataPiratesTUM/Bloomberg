@@ -143,7 +143,7 @@ export default function Security(props: Sec) {
                   <section
                     key={order.price}
                     className="max-w-lg  border shadow rounded my-2 p-4 flex justify-between 
-                      bg-green-300"
+                    bg-blue-600"
                   >
                     <p>
                       {order.quantity} units @ {order.price / 1000}€
