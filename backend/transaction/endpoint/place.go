@@ -216,11 +216,13 @@ func PlaceOrder(c *gin.Context, db *sql.DB) {
 			} else {
 				diff := time.Since(creationDate).Seconds()
 
+				fmt.Println(diff)
 				m := (-1000) / (ttl1 / 86400)
-				currentPrice := m*((ttl1-int64(diff))/86400) + (1000)
+				currentPrice := m*(int64(diff)/86400) + (1000)
 				if currentPrice < 0 {
 					currentPrice = 0
 				}
+				fmt.Println(currentPrice)
 
 				//If the price is to high dont buy
 				if currentPrice < body.Price {

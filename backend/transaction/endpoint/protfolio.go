@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -28,7 +29,7 @@ WITH security_value AS (
             ELSE 
                 0
             END
-        )) OVER (ORDER BY creation_date) AS amount
+        )) OVER (PARTITION BY security ORDER BY creation_date) AS amount
 	FROM matches
     GROUP BY security, creation_date
 )
@@ -37,7 +38,7 @@ SELECT
     v.t,
     v.value * a.amount AS v
 FROM security_value AS v, security_amount AS a
-WHERE v.security = a.security AND v.t = a.t;
+WHERE v.security = a.security AND v.t = a.t ORDER BY v.t ASC ;
 `
 
 func PortfolioValue(c *gin.Context, db *sql.DB) {
@@ -67,6 +68,7 @@ func PortfolioValue(c *gin.Context, db *sql.DB) {
 		}
 
 		values[security] = value
+		fmt.Println(values)
 
 		var valueSum int64 = 0
 		for _, v := range values {
